@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch-All Mail Checker</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-envelope-open-text"></i> vNode Email Verifyer</h1>
+            <p>Verify catch-all email configurations and test email deliverability</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Email Input Section -->
+            <div class="input-section">
+                <h2><i class="fas fa-envelope"></i> Email Configuration</h2>
+                
+                <!-- Single/Multiple Email Input -->
+                <div class="input-tabs">
+                    <button class="tab-btn active" id="singleTab">Single Email</button>
+                    <button class="tab-btn" id="multipleTab">Multiple Emails</button>
+                    <button class="tab-btn" id="fileTab">File Upload</button>
+                </div>
+
+                <!-- Single Email Input -->
+                <div class="input-panel active" id="singlePanel">
+                    <div class="form-group">
+                        <label for="singleEmail">Email to check:</label>
+                        <input type="email" id="singleEmail" placeholder="test@example.com" />
+                    </div>
+                </div>
+
+                <!-- Multiple Emails Input -->
+                <div class="input-panel" id="multiplePanel">
+                    <div class="form-group">
+                        <label for="multipleEmails">Enter multiple emails (one per line):</label>
+                        <textarea id="multipleEmails" placeholder="test1@example.com&#10;test2@example.com&#10;test3@example.com" rows="6"></textarea>
+                    </div>
+                    <div class="email-count">
+                        <span id="emailCount">0 emails entered</span>
+                    </div>
+                </div>
+
+                <!-- File Upload Input -->
+                <div class="input-panel" id="filePanel">
+                    <div class="form-group">
+                        <label for="fileInput">Upload CSV or Excel file:</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose CSV or Excel file</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-details">
+                            <span class="file-name"></span>
+                            <span class="file-size"></span>
+                        </div>
+                        <div class="file-preview" id="filePreview"></div>
+                    </div>
+                </div>
+
+                <div class="check-controls">
+                    <button id="checkBtn" class="btn-primary">
+                        <i class="fas fa-search"></i> Check Emails
+                    </button>
+                    <button id="clearBtn" class="btn-secondary" style="display: none;">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2><i class="fas fa-chart-line"></i> Check Results</h2>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container" id="progressContainer" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progressText">Checking emails...</span>
+                        <span id="progressCount">0/0</span>
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="summary-stats" id="summaryStats" style="display: none;">
+                    <div class="stat-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <span class="stat-number" id="totalEmails">0</span>
+                            <span class="stat-label">Total Emails</span>
+                        </div>
+                    </div>
+                    <div class="stat-item success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <span class="stat-number" id="validEmails">0</span>
+                            <span class="stat-label">Valid</span>
+                        </div>
+                    </div>
+                    <div class="stat-item warning">
+                        <i class="fas fa-inbox"></i>
+                        <div>
+                            <span class="stat-number" id="catchAllEmails">0</span>
+                            <span class="stat-label">Catch-All</span>
+                        </div>
+                    </div>
+                    <div class="stat-item error">
+                        <i class="fas fa-times-circle"></i>
+                        <div>
+                            <span class="stat-number" id="invalidEmails">0</span>
+                            <span class="stat-label">Invalid</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="results-table-container" id="resultsTableContainer" style="display: none;">
+                    <div class="table-controls">
+                        <div class="filter-controls">
+                            <select id="statusFilter">
+                                <option value="all">All Results</option>
+                                <option value="valid">Valid Only</option>
+                                <option value="catch-all">Catch-All Only</option>
+                                <option value="invalid">Invalid Only</option>
+                            </select>
+                            <input type="text" id="searchFilter" placeholder="Search emails..." />
+                        </div>
+                        <div class="export-controls">
+                            <button id="exportResultsBtn" class="btn-secondary">
+                                <i class="fas fa-download"></i> Export Results
+                            </button>
+                        </div>
+                    </div>
+                    <div class="results-table-wrapper">
+                        <table class="results-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Domain</th>
+                                    <th>Domain Type</th>
+                                    <th>Blacklist</th>
+                                    <th>SMTP</th>
+                                    <th>Catch-All</th>
+                                    <th>Score <span style="cursor:pointer;" title="
+    How the score is calculated:
+
+    ➖ 60 points: Email server rejected or unreachable
+    ➖ 40 points: Email is from a disposable/temporary service
+    ➖ 40 points: Email domain is blacklisted
+    ➖ 30 points: Domain accepts all emails (catch-all)
+    ➖ 20 points: Email is role-based (e.g., info@, support@)
+    ➕ 10 points: SPF record is valid (helps verify sender)
+    ➕ 10 points: DKIM is valid (ensures message wasn't altered)
+    ➕ 10 points: DMARC is valid (protects against spoofing)
+    Score is calculated on a 0–1 scale by the backend, and shown here as 0–100 for easier understanding.
+
+    "><i class="fas fa-info-circle"></i></span></th>
+                                    <th>Risk <span style="cursor:pointer;" title="
+    Scoring Guide:
+    This score helps you understand the quality and safety of the email address.
+
+    ✅ Safe (Green): 70–100
+    ⚠️ Medium Risk (Yellow): 41–69
+    ⛔ High Risk (Red): Below 40
+
+                                        "><i class="fas fa-info-circle"></i></span></th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section">
+                <h2><i class="fas fa-history"></i> Check History</h2>
+                <div class="history-controls">
+                    <button id="clearHistoryBtn" class="btn-secondary">
+                        <i class="fas fa-trash"></i> Clear History
+                    </button>
+                    <button id="exportHistoryBtn" class="btn-secondary">
+                        <i class="fas fa-download"></i> Export Results
+                    </button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <p class="no-history">No checks performed yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Checking mail configuration...</p>
+            </div>
+        </div>
+
+        <!-- Export Filter Modal -->
+        <div id="exportFilterModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);z-index:10000;align-items:center;justify-content:center;">
+          <div style="background:#fff;padding:32px 36px 28px 36px;border-radius:16px;max-width:420px;width:95vw;box-shadow:0 8px 32px #0003, 0 1.5px 6px #0001;position:relative;">
+            <button id="closeExportFilterModal" style="position:absolute;top:14px;right:18px;font-size:1.5em;background:none;border:none;cursor:pointer;color:#888;transition:color 0.2s;" onmouseover="this.style.color='#e53e3e'" onmouseout="this.style.color='#888'">&times;</button>
+            <h2 style="margin:0 0 18px 0;font-size:1.35em;font-weight:600;color:#222;letter-spacing:0.5px; text-align: center;">Export Filter</h2>
+            <form id="exportFilterForm" style="margin-bottom:0;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-bottom:18px;align-items:start;">
+                <div>
+                  <div style="font-weight:600;font-size:1.05em;margin-bottom:6px;color:#2563eb;letter-spacing:0.2px;">Validation</div>
+                  <label style="display:flex;align-items:center;gap:7px;font-size:1em;cursor:pointer;"><input type="checkbox" name="valid" checked style="accent-color:#767c78;"> <i class="fas fa-check-circle" style="color:#22c55e;"></i> Valid</label>
+                  <label style="display:flex;align-items:center;gap:7px;font-size:1em;cursor:pointer;"><input type="checkbox" name="catchall" checked style="accent-color:#767c78;"> <i class="fas fa-inbox" style="color:#f59e42;"></i> Catch-All</label>
+                  <label style="display:flex;align-items:center;gap:7px;font-size:1em;cursor:pointer;"><input type="checkbox" name="invalid" checked style="accent-color:#767c78;"> <i class="fas fa-times-circle" style="color:#ef4444;"></i> Invalid</label>
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:1.05em;margin-bottom:6px;color:#dc2626;letter-spacing:0.2px;">Trust Level</div>
+                  <label style="display:flex;align-items:center;gap:7px;font-size:1em;cursor:pointer;"><input type="checkbox" name="safe" checked style="accent-color:#767c78;"> <i class="fa-solid fa-shield" style="color:#16a34a;"></i> Safe</label>
+                  <label style="display:flex;align-items:center;gap:7px;font-size:1em;cursor:pointer;"><input type="checkbox" name="medium" checked style="accent-color:#767c78;"> <i class="fas fa-exclamation-triangle" style="color:#fbbf24;"></i> Medium</label>
+                  <label style="display:flex;align-items:center;gap:7px;font-size:1em;cursor:pointer;"><input type="checkbox" name="risk" checked style="accent-color:#767c78;"> <i class="fas fa-exclamation-circle" style="color:#dc2626;"></i> Risk</label>
+                </div>
+              </div>
+              <hr style="border:none;border-top:1px solid #eee;margin:0 0 18px 0;">
+              <div style="display:flex;gap:16px;justify-content:center;">
+                <button type="button" id="exportAsCSV" class="btn-secondary" style="background:#2563eb;color:#fff;font-weight:600;padding:10px 13px;border-radius:8px;border:none;box-shadow:0 1px 4px #2563eb22;display:flex;align-items:center;gap:8px;font-size:15px;transition:background 0.2s;cursor:pointer;">
+                  <i class="fas fa-file-csv"></i> Export as CSV
+                </button>
+                <button type="button" id="exportAsExcel" class="btn-secondary" style="background:#22c55e;color:#fff;font-weight:600;padding:10px 13px;border-radius:8px;border:none;box-shadow:0 1px 4px #22c55e22;display:flex;align-items:center;gap:8px;font-size:15px;transition:background 0.2s;cursor:pointer;">
+                  <i class="fas fa-file-excel"></i> Export as Excel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/mailChecker.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>

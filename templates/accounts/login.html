@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block body %} 
+
+</div>
+{% if messages %}
+    <div class="fixed top-4 right-4 space-y-4">
+        {% for message in messages %}
+            <div class="bg-blue-600 text-white px-4 py-3 rounded shadow-lg flex items-center">
+                <span>{{ message }}</span>
+                <button class="text-red-500 ml-6 pl-2" onclick="this.parentElement.remove();">
+                    &times;
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Section: Design Block -->
+<section class=" background-radial-gradient min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <style>
+            .background-radial-gradient {
+        background-color: hsl(218, 41%, 15%);
+        background-image: radial-gradient(650px circle at 0% 0%,
+            hsl(218, 41%, 35%) 15%,
+            hsl(218, 41%, 30%) 35%,
+            hsl(218, 41%, 20%) 75%,
+            hsl(218, 41%, 19%) 80%,
+            transparent 100%),
+          radial-gradient(1250px circle at 100% 100%,
+            hsl(218, 41%, 45%) 15%,
+            hsl(218, 41%, 30%) 35%,
+            hsl(218, 41%, 20%) 75%,
+            hsl(218, 41%, 19%) 80%,
+            transparent 100%);
+            min-height: 83.5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+      }
+      #radius-shape-1 {
+        height: 220px;
+        width: 220px;
+        top: -60px;
+        left: -130px;
+        background: radial-gradient(#44006b, #ad1fff);
+        overflow: hidden;
+      }
+
+      #radius-shape-2 {
+        border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%;
+        bottom: -60px;
+        right: -110px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(#44006b, #ad1fff);
+        overflow: hidden;
+      }
+    </style>
+
+    <div class="container mx-auto px-4 py-5 text-center lg:text-left my-5 flex justify-center">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div class="text-white z-10">
+          <h1 class="text-4xl font-bold leading-tight mb-5">
+            vNode Digital <br />
+            <span class="text-blue-300">Email Scrapper</span>
+          </h1>
+          <p class="text-blue-200 opacity-70">
+            Effortlessly extract email addresses from websites with our powerful and user-friendly Email Scraper. Whether you're targeting a specific URL, exploring 2-level deep links, or performing a Google-based search, vNode Digital gives you the tools to uncover business contacts in seconds.
+          </p>
+        </div>
+
+        <div class="relative">
+          <div id="radius-shape-1" class="absolute rounded-full shadow-lg"></div>
+          <div id="radius-shape-2" class="absolute shadow-lg"></div>
+
+          <div class="bg-white bg-opacity-90 backdrop-blur-md rounded-lg shadow-lg p-6">
+            <form method="POST">
+              {% csrf_token %}
+              <!-- Email input -->
+              <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2" for="form3Example3">Email address</label>
+                <input type="email" id="form3Example3" class="w-full px-4 py-2 border border-gray-300 rounded focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1" name="email" required />
+              </div>
+
+              <!-- Password input -->
+              <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2" for="form3Example4">Password</label>
+                <input type="password" id="form3Example4" class="w-full px-4 py-2 border border-gray-300 rounded focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1" name="password" required />
+              </div>
+
+              <!-- Submit button -->
+              <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded hover:bg-teal-800 transition">
+                Login
+              </button>
+              <br />
+              <span class="text-gray-600 text-sm mt-4 block">You don't have an account? Please <a href="{% url 'accounts:register' %}" class="text-blue-500 hover:underline">Register</a> now!</span>
+            </form>
+            <div class="text-center mt-4">
+              <a href="{% url 'accounts:forgot_password' %}" class="text-blue-500 hover:underline">
+                Forgot Password?
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+<!-- Section: Design Block -->
+
+{% endblock %}

@@ -1,0 +1,90 @@
+{% load static %}
+<nav class="bg-white shadow-md sticky top-0 z-50">
+  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="{% url 'home' %}">
+      <img src="https://vnode.digital/wp-content/uploads/2025/04/scraper-logo.png" alt="logo" class="w-28">
+    </a>
+
+    <div class="hidden sm:ml-6 sm:block">
+      <div class="flex space-x-4">
+        <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
+        <a href="/"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Home</a>
+        <a href="{% url 'scraper:scraper'%}"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Scraper</a>
+        <a href="{% url 'package:package' %}"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Packages</a>
+        <a href="{% url 'verifier:verify_emails' %}"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Email Verifier</a>
+        <a href="#"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">About</a>
+      </div>
+    </div>
+
+    <!-- User Dropdown -->
+    <div class="relative flex gap-3">
+      
+      <form action="{% url 'accounts:claim_reward' %}" method="POST">
+        {% csrf_token %}
+        <button type="submit" style="font-size: 25px; " 
+                class="{% if user.profile.last_reward_claim == today %}text-yellow-600 hover:text-yellow-800{% else %}text-teal-600 hover:text-teal-800{% endif %} py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+                title="Daily Email Credits Rewards">
+                
+                <i class="fa fa-gift"></i>
+        </button>
+      </form>
+      
+      <button
+        id="userDropdownButton"
+        class="text-teal-600 text-5xl focus:outline-none"
+        style="font-size: 25px; background-color: transparent;"
+      >
+        <i class="fa fa-user-circle text-teal-600 hover:text-teal-800"></i>
+      </button>
+
+      <ul id="userDropdown"
+          class="hidden p-2 absolute right-0 mt-12 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        {% if user.is_authenticated %}
+          <li>
+            <a href="{% url 'accounts:user_profile' %}" class="block px-4 py-2 hover:bg-teal-800 hover:text-white rounded-md">
+              <i class="fa fa-user mr-2 text-yellow-600"></i>Profile
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:dashboard' %}" class="block px-4 py-2 hover:bg-teal-800 hover:text-white rounded-md">
+              <i class="fa fa-tachometer-alt mr-2 text-yellow-600"></i>Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:custom_logout' %}" class="block px-4 py-2 hover:bg-teal-800 rounded-md">
+              <i class="fa fa-sign-out-alt mr-2 text-yellow-600"></i>Logout
+            </a>
+          </li>
+        {% else %}
+          <li>
+            <a href="{% url 'accounts:custom_login' %}" class="block px-4 py-2 hover:bg-teal-100 rounded-md">
+              <i class="fa fa-sign-in-alt mr-2"></i>Login
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+
+<script>
+  // JavaScript to toggle the dropdown
+  document.addEventListener('DOMContentLoaded', function () {
+    const dropdownButton = document.getElementById('userDropdownButton');
+    const dropdownMenu = document.getElementById('userDropdown');
+
+    dropdownButton.addEventListener('click', function () {
+      dropdownMenu.classList.toggle('hidden');
+    });
+
+    // Close the dropdown if clicked outside
+    document.addEventListener('click', function (event) {
+      if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+        dropdownMenu.classList.add('hidden');
+      }
+    });
+  });
+</script>

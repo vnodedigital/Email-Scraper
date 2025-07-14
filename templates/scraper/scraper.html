@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% block body %} 
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0px; text-align: center; }
+        .container1 { max-width: 600px; margin: auto; padding: 20px; min-height: 85vh; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        
+
+
+        .export-button {
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+        }
+        .export-div {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Popup Progress Bar Styles */
+        #progress-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 300px;
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+
+        #progress-popup h3 {
+            margin: 0 0 10px;
+        }
+
+        #progress-bar-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #00ff99;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        /* tab button color  */
+        .tab-button.active {
+            background-color: #14b8a6; /* Tailwind's teal-600 */
+            color: white;
+        }
+
+        .tab-button {
+            background-color: #e5e7eb; /* Tailwind's gray-200 */
+            color: #374151; /* Tailwind's gray-800 */
+        }
+
+        .tab-button:hover {
+            background-color: #0d9488; /* Tailwind's teal-800 */
+        }
+
+        .scrap-btn {
+            background-color: #14b8a6; /* Tailwind's teal-600 */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer!important;
+        }
+
+        .scrap-btn:hover {
+            background-color: #0d9488; /* Tailwind's teal-800 */
+        }
+
+        a.tab-button {
+            text-decoration: none;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -55%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translate(-50%, -50%); }
+            to { opacity: 0; transform: translate(-50%, -55%); }
+        }
+
+        @media (max-width: 768px) {
+            .tab{font-size: 14px; padding: 10px 10px;
+        }
+        }
+    </style>
+
+<body>
+
+<!-- Popup Progress -->
+<div id="progress-popup">
+    <h5>Loading... Please Wait</h5>
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+    </div>
+</div>
+
+<div class="container1">
+    <h2 class="text-center text-4xl">Email Scraper</h2>
+
+    <!-- Tabs -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="flex justify-center space-x-0 mb-6">
+            <a  class="tab-button active px-4 py-2 bg-teal-600 text-white  hover:bg-teal-800 transition" data-tab="url-tab">Specific URL</a>
+            <a  class="tab-button px-4 py-2 bg-gray-200 text-gray-800  hover:bg-gray-300 transition" data-tab="multilevel-tab">2-Level URLs</a>
+            <a  class="tab-button px-4 py-2 bg-gray-200 text-gray-800  hover:bg-gray-300 transition" data-tab="keyword-tab">Google Search</a>
+          </div>
+  
+        <!-- Tab Content -->
+        <div id="url-tab" class="tab-content active">
+          <form action="{% url 'scraper:scrape_specific' %}" method="GET" class="space-y-4">
+            <label class="block text-sm font-medium text-gray-700">Scrape Emails from a Specific URL:</label>
+            <input type="text" name="url" placeholder="https://example.com" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1">
+            <button type="submit"
+              class="scrap-btn w-full bg-teal-600 text-white py-2 rounded-md hover:bg-teal-800 transition">Scrape URL</button>
+          </form>
+        </div>
+  
+        <div id="multilevel-tab" class="tab-content hidden">
+          <form action="{% url 'scraper:scrape_multilevel' %}" method="GET" class="space-y-4">
+            <label class="block text-sm font-medium text-gray-700">Scrape Emails from 2-Level URLs:</label>
+            <input type="text" name="url" placeholder="https://example.com" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1">
+            <button type="submit"
+              class="scrap-btn w-full bg-teal-600 text-white py-2 rounded-md hover:bg-teal-800 transition">Scrape 2-Level</button>
+          </form>
+        </div>
+
+        <div id="keyword-tab" class="tab-content hidden">
+            <form action="{% url 'scraper:scrape_google_keyword' %}" method="POST" class="space-y-4">
+              {% csrf_token %}
+              <label class="block text-sm font-medium text-gray-700">Scrape Emails by Keyword & Country:</label>
+              <input type="text" name="keyword" placeholder="Enter Keyword (e.g., Accountant)" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1">
+              <input type="text" name="country" placeholder="Enter Country (e.g., Bangladesh)" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1">
+              <input type="text" name="result_list" placeholder="Enter Result List Number (e.g., 10)" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:border-teal-600 focus:outline-none focus:ring-teal-600 focus:ring-1">
+              <button type="submit"
+                class="scrap-btn w-full bg-teal-600 text-white py-2 rounded-md hover:bg-teal-800 transition">Scrape by Keyword</button>
+            </form>
+          </div>
+        
+    </div>
+
+
+
+{% if g_emails or emails %}
+<!-- Export Buttons -->
+    {% if g_emails %}
+        <h3>Total Emails Found: {{ g_emails|length }}</h3>
+    {% elif emails %}
+        <h3>Total Emails Found: {{ emails|length }}</h3>
+    {% endif %}
+<div class="export-div">
+    <button id="export-csv" class="export-button bg-teal-500 hover:bg-teal-700 text-white">
+        <i class="fa-solid fa-file-csv"></i> Export to CSV
+    </button>
+    
+    <button id="export-excel" class="export-button bg-yellow-600 hover:bg-yellow-800 text-white">
+        <i class="fas fa-file-excel"></i> Export to Excel
+    </button>
+</div>
+{% endif %}
+    {% if g_emails %}
+        <div>
+            <h5>
+                <span>Keyword : {{keyword}}</span>   ||   
+                <span>Country : {{country}}</span>
+            </h5>
+            
+        </div>
+        <div class="max-h-64 overflow-y-auto">
+            <table class="min-w-full border-collapse border border-gray-300" id="email-table">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">S.N</th>
+                        <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for email in g_emails %}
+                        <tr class="odd:bg-white even:bg-gray-50">
+                            <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ forloop.counter }}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ email }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+    {% elif emails %}
+    <h4>Website: {{url}}</h4>
+    <div class="max-h-64 overflow-y-auto">
+        <table class="min-w-full border-collapse border border-gray-300" id="email-table">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">S.N</th>
+                    <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for email in emails %}
+                    <tr class="odd:bg-white even:bg-gray-50">
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ forloop.counter }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ email }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <p class="text-danger"></p>
+    {% endif %}
+
+    {% if error %}
+        <p style="color: red;">Error: {{ error }}</p>
+    {% endif %}
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+
+<script>
+
+   // Tab functionality
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class and reset styles for all buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'bg-teal-800', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-800');
+      });
+
+      // Add active class and styles to the clicked button
+      button.classList.add('active', 'bg-teal-800', 'text-white');
+      button.classList.remove('bg-gray-200', 'text-gray-800');
+
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+
+      // Show the corresponding tab content
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(tabId).classList.remove('hidden');
+    });
+  });
+
+
+
+    //Progress bar Start.....................................
+    document.addEventListener("DOMContentLoaded", function () {
+        let progressPopup = document.getElementById("progress-popup");
+        let progressBar = document.getElementById("progress-bar");
+
+        function startProgress() {
+            progressPopup.style.display = "block";
+            progressBar.style.width = "0%";
+
+            let progress = 0;
+            let interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 90) progress = 90; // Hold at 90% until fully loaded
+                progressBar.style.width = progress + "%";
+            }, 300);
+
+            window.addEventListener("load", () => {
+                clearInterval(interval);
+                progressBar.style.width = "100%";
+                setTimeout(() => {
+                    progressPopup.style.animation = "fadeOut 0.5s";
+                    setTimeout(() => {
+                        progressPopup.style.display = "none";
+                        progressPopup.style.animation = ""; // Reset animation
+                    }, 500);
+                }, 500);
+            });
+        }
+
+        // Show popup on form submission
+        document.querySelectorAll(".scraper-form").forEach(form => {
+            form.addEventListener("submit", function () {
+                startProgress();
+            });
+        });
+
+
+
+        // Show popup on page navigation
+        window.addEventListener("beforeunload", function () {
+            startProgress();
+        });
+    });
+    //Progress bar end..................................................
+
+    // Get keyword and country from Django context
+    const keyword = "{{ keyword|escapejs }}";
+    const country = "{{ country|escapejs }}";
+    const url = "{{ url|escapejs }}";
+
+    const filenameBase = `${country} ${keyword} ${url} emails`.replace(/\s+/g, "_");
+    // Export to CSV
+    document.getElementById("export-csv").addEventListener("click", function() {
+        let table = document.getElementById("email-table");
+        let rows = table.querySelectorAll("tr");
+
+        let csvData = [];
+        rows.forEach(function(row) {
+            let cols = row.querySelectorAll("td, th");
+            let rowData = [];
+            cols.forEach(function(col) {
+                rowData.push(col.innerText);
+            });
+            csvData.push(rowData.join(","));
+        });
+
+        let csvFile = new Blob([csvData.join("\n")], { type: "text/csv" });
+        let downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(csvFile);
+        downloadLink.download = `${filenameBase}.csv`;
+        downloadLink.click();
+    });
+
+    // Export to Excel
+    document.getElementById("export-excel").addEventListener("click", function() {
+        let table = document.getElementById("email-table");
+        let rows = table.querySelectorAll("tr");
+
+        let wb = XLSX.utils.book_new();
+        let ws = XLSX.utils.table_to_sheet(table);
+        XLSX.utils.book_append_sheet(wb, ws, "Emails");
+
+        // Generate Excel file and prompt download
+        XLSX.writeFile(wb, `${filenameBase}.xlsx`);
+    });
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yellow Pages Scraper Results</title>
+</head>
+<body>
+    <h1>Yellow Pages Results for "{{ keyword }}" in "{{ location }}"</h1>
+
+    {% if companies %}
+    <table>
+      <tr><th>Name</th><th>Category</th><th>Phone</th><th>Email</th><th>Website</th></tr>
+      {% for c in companies %}
+        <tr>
+          <td>{{ c.name }}</td>
+          <td>{{ c.category }}</td>
+          <td>{{ c.phone }}</td>
+          <td>{{ c.email }}</td>
+          <td><a href="{{ c.website }}" target="_blank">{{ c.website }}</a></td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No companies found.</p>
+  {% endif %}
+
+    <p>Total results found: {{ total_links }}</p>
+</body>
+</html>

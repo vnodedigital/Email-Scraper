@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Scraper</title>
+</head>
+<body>
+    <h2>Email Scraper</h2>
+    <form action="/" method="post">
+        {% csrf_token %}
+        <label>Keyword:</label>
+        <input type="text" name="keyword" required>
+        <br><br>
+        <label>Country:</label>
+        <input type="text" name="country" required>
+        <br><br>
+        <button type="submit">Scrape</button>
+    </form>
+
+    {% if emails %}
+        <h3>Extracted Emails:</h3>
+        <ul>
+            {% for email in emails %}
+                <li>{{ email }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

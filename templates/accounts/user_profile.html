@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+
+
+<div class="container mx-auto mt-10 min-height: 85vh;" style="min-height: 80vh;">
+  <h2 class="mb-8 text-center text-2xl font-bold">
+    {{ request.user.username }}'s Profile
+  </h2>
+
+  <div class="card mb-8 shadow-lg border border-gray-200 rounded-lg max-w-4xl text-align-center mx-auto">
+    <div class="p-6">
+      <h5 class="font-bold text-lg mb-4 text-center text-teal-600">
+        <i class="fas fa-user-tag mr-2 text-yellow-600"></i><span class="text-teal-600">Subscription Info</span> 
+      </h5>
+      <ul class="divide-y divide-gray-200">
+        <li class="flex justify-between py-2">
+          <span><strong>Name:</strong></span>
+          <span class="text-gray-500">{{ request.user.first_name }} {{request.user.last_name}} </span>
+        </li>
+        <li class="flex justify-between py-2">
+          <span><strong>Company:</strong></span>
+          <span class="text-gray-500">{{ profile.company_name }}</span>
+        </li>
+        <li class="flex justify-between py-2">
+          <span><strong>Phone:</strong></span>
+          <span class="text-gray-500">{{ profile.phone_number }}</span>
+        </li>
+        <li class="flex justify-between py-2">
+          <span><strong>Email:</strong></span>
+          <span class="text-gray-500">{{ user.email }}</span>
+        </li>
+        <li class="flex justify-between py-2">
+          <span><strong>Package:</strong></span>
+          <span class="text-gray-500 capitalize">{{ profile.subscription_package }}</span>
+        </li>
+        <li class="flex justify-between py-2">
+          <span><strong>Email Credits:</strong></span>
+          {% if profile.email_credits > 0 %}
+            <span class="bg-teal-600 text-white px-3 py-1 rounded-full">{{ profile.email_credits }}</span>
+          {% else %}
+            <span class="bg-red-600 text-white px-3 py-1 rounded-full">{{ profile.email_credits }}</span>
+          {% endif %}
+        </li>
+        <li class="flex justify-between py-2">
+          <span><strong>Subscription Expiry:</strong></span>
+          {% if profile.subscription_end and profile.subscription_end >= today %}
+            <span class="text-green-600">
+              <i class="fas fa-check-circle mr-1"></i>{{ profile.subscription_end|date:"Y-m-d" }}
+              <small class="text-gray-500">({{ remaining_days }} days remaining)</small>
+            </span>
+          {% elif profile.subscription_end %}
+            <span class="text-red-600">
+              <i class="fas fa-times-circle mr-1"></i>{{ profile.subscription_end|date:"Y-m-d" }}
+              <small class="text-gray-500">(Expired {{ profile.subscription_end|timesince:today }} ago)</small>
+            </span>
+          {% else %}
+            <span class="text-red-600">
+              <i class="fas fa-times-circle mr-1"></i> No subscription end date available
+            </span>
+          {% endif %}
+        </li>
+      </ul>
+      <div class="mt-6 text-center">
+        <!-- Add any additional content here -->
+      </div>
+      <a href="{% url 'accounts:edit_profile' %}" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition duration-300">Edit Profile</a>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

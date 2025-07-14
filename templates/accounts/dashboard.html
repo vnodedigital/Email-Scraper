@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+
+  
+
+{% endblock %}
+
+{% block body %}
+
+<!-- Popup Progress -->
+<div id="progress-popup">
+  <h5>Loading... Please Wait</h5>
+  <div id="progress-bar-container">
+      <div id="progress-bar"></div>
+  </div>
+</div>
+<!-- End of Popup Progress -->
+
+<div class="container mx-auto mt-10 mb-8">
+<div>
+  <h2 class="mb-8 text-center text-2xl font-bold">
+    {{ request.user.first_name }} {{request.user.last_name}}'s Dashboard
+  </h2>
+
+  
+  <div class="flex flex-col items-center mb-8"> 
+    
+<div class="count-div inline-flex rounded-md shadow-xs text-center" role="group">
+  <button type="button" class="inline-flex items-center px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg">
+    <i class="fas fa-envelope mr-2 text-yellow-600"></i><span class="text-teal-600">Total Emails Scraped: {{ total_scraped_emails }} </span>
+  </button>
+  <button type="button" class="inline-flex items-center px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200">
+    <i class="fas fa-check-circle mr-2 text-green-600"></i><span class="text-teal-600">Total Unique Emails: {{ unique_emails_count }}</span>
+  </button>
+  <button type="button" class="inline-flex items-center px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200 rounded-r-lg">
+    <i class="fas fa-exclamation-circle mr-2 text-red-600"></i><span class="text-teal-600">Total Duplicate Emails: {{ duplicate_emails_count }}</span>
+  </button>
+</div>
+
+</div>
+
+<div class="export-div border-gray-400 rounded-md inset-shadow-sm inset-shadow-teal-600 p-4 m-4 max-w-4xl text-align-center mx-auto">
+<div>
+    <h4 class="mb-6 text-2xl font-semibold text-center underline"><i class="fa-solid fa-filter text-yellow-600"></i> <span class="text-teal-600">Export with Filter</span></h4>
+</div>
+<div class="flex items-center justify-center mb-8" >
+  <form method="POST" action="{% url 'accounts:export_filtered_data' %}" id="exportForm" class="mb-4">
+    {% csrf_token %}
+    <div class="export-field grid grid-cols-1 md:grid-cols-4 gap-4" style="display: flex; gap: 10px;">
+      <!-- Keyword Dropdown -->
+      <div class="export-form-field">
+        <label for="keyword" class="block text-sm font-medium text-gray-700">Keyword</label>
+        <select id="keyword" name="keyword" class="p-2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+          <option class="hover:bg-teal-800" value="">All Keywords</option>
+          {% for keyword in unique_keywords %}
+              <option  value="{{ keyword }}">{{ keyword }}</option>
+          {% endfor %}
+      </select>
+      </div>
+
+      <!-- Country Dropdown -->
+      <div class="export-form-field">
+        <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+        <select id="country" name="country" class="p-2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+          <option value="">All Countries</option>
+          {% for country in unique_countries %}
+              <option value="{{ country }}">{{ country }}</option>
+          {% endfor %}
+      </select>
+      </div>
+
+      <!-- Email Dropdown -->
+      <div class="export-form-field">
+        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <select id="email" name="email" class="p-2 mt-1 block w-full border-teal-200 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+          <option value="all">All Emails</option>
+          <option value="unique">Unique Emails</option>
+        </select>
+      </div>
+      <div class="" style="display: flex; flex-direction: column-reverse;">
+        <button type="submit" class="bg-teal-600 text-white px-5 py-2 rounded hover:bg-teal-800" >
+            Export
+          </button>
+        </div>
+    </div>
+
+  </form>
+</div>
+</div>
+</div>
+
+<h4 class="mb-6 text-2xl font-semibold text-center"><i class="fa-solid fa-scroll text-yellow-600"></i> <span class="text-teal-600">Scraped Results</span></h4>
+  {% if scraped_results %}
+    <div class="overflow-x-auto">
+      <table class="table-auto w-full border-collapse border border-gray-300">
+        <thead class="bg-gray-800 text-white">
+          <tr>
+            <th class="px-4 py-2 border border-gray-300">Date</th>
+            <th class="px-4 py-2 border border-gray-300">Keyword</th>
+            <th class="px-4 py-2 border border-gray-300">Country</th>
+            <th class="px-4 py-2 border border-gray-300">Email Count</th>
+            <th class="px-4 py-2 border border-gray-300">URL Count</th>
+            <th class="px-4 py-2 border border-gray-300">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for result in scraped_results %}
+            <tr class="odd:bg-gray-100 even:bg-white">
+              <td class="px-4 py-2 border border-gray-300">{{ result.scraped_at|date:"Y-m-d H:i" }}</td>
+              <td class="px-4 py-2 border border-gray-300">{{ result.keyword }}</td>
+              <td class="px-4 py-2 border border-gray-300">{{ result.country }}</td>
+              <td class="px-4 py-2 border border-gray-300">{{ result.emails|length }}</td>
+              <td class="px-4 py-2 border border-gray-300">{{ result.urls|length }}</td>
+              <td class="px-4 py-2 border border-gray-300 flex space-x-2">
+                <!-- View Button -->
+                <button onclick="openModal('{{ result.id }}')" class="bg-teal-600 text-white px-3 py-1 mx-2 rounded hover:bg-teal-800">
+                  <i class="fas fa-eye"></i> View
+                </button>
+            
+                <!-- Delete Form -->
+                <form action="{% url 'scraper:delete_result' result.id %}" method="post" class="inline" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+                  {% csrf_token %}
+                  <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </form>
+                <button id="export-excel{{ result.id }}" class="bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-800">
+                    <i class="fas fa-file-excel"></i> Export
+                </button>
+                <form method="post" action="{% url 'verifier:verifier' result.id %}">
+                  {% csrf_token %}
+                  <button  type="submit" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-800">
+                    
+                    {% if result.verified %}
+                    <i class="fas fa-check-circle text-white-600"></i> Verify Email
+                    {% else %}
+                        <i class="fas fa-envelope text-blue-400"></i> Verify Email
+                    {% endif %}
+                  </button>
+              </form>
+              </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-gray-500">No results found.</p>
+  {% endif %}
+
+  <!-- All Modals -->
+  {% for result in scraped_results %}
+  <div id="emailModal{{ result.id }}" class="fixed inset-0 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl modal-content">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center p-4 border-b border-teal-800 sticky top-0 bg-white z-10">
+        <h5 class="text-lg font-semibold">ðŸ“§ Emails for "{{ result.keyword }}"</h5>
+        <button onclick="closeModal('{{ result.id }}')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4">
+        <p><strong>Country:</strong> {{ result.country }}</p>
+        <h6>Emails</h6>
+        {% if result.emails %}
+        <div class="overflow-x-auto">
+          <table class="table-auto w-full border-collapse border border-gray-300" id="email-table{{ result.id }}">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-2 border border-gray-300">#</th>
+                <th class="px-4 py-2 border border-gray-300">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for email in result.emails %}
+              <tr>
+                <td class="px-4 py-2 border border-gray-300">{{ forloop.counter }}</td>
+                <td class="px-4 py-2 border border-gray-300">{{ email }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No emails found.</p>
+        {% endif %}
+
+        <h6 class="mt-4">URLs</h6>
+        <ol class="list-decimal pl-5">
+          {% for url in result.urls %}
+          <li><a href="{{ url }}" target="_blank" class="text-blue-500 hover:underline">{{ url }}</a></li>
+          {% endfor %}
+        </ol>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end p-4 border-t">
+        <button onclick="closeModal('{{ result.id }}')" class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Close</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+
+  
+  @media (max-width: 768px) {
+   .result_table {
+       width: max-content;
+     }
+   }
+   .modal-content {
+    max-height: 90vh; /* Set the modal height to 90% of the viewport height */
+    overflow-y: auto; /* Enable scrolling for overflowing content */
+  }
+
+    @media screen and (max-width: 768px) {
+      .count-div {
+        display: flex;
+        flex-direction: column; /* Stack vertically on small screens */
+        
+      }
+      button {
+        border-radius: 0px;
+      }
+      .export-form-field {
+        width: 250px;
+      }
+
+      .export-field {
+        display: flex;
+        flex-direction: column; /* Stack vertically on small screens */
+        gap: 10px; /* Add some space between the fields */
+      }
+        
+    }
+
+
+         /* Popup Progress Bar Styles */
+         #progress-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 300px;
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+
+        #progress-popup h3 {
+            margin: 0 0 10px;
+        }
+
+        #progress-bar-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: rgb(1, 214, 214);
+            transition: width 0.3s ease-in-out;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -55%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translate(-50%, -50%); }
+            to { opacity: 0; transform: translate(-50%, -55%); }
+        }
+
+        @media (max-width: 768px) {
+            .tab{font-size: 14px; padding: 10px 10px;
+        }
+        }
+
+</style>
+
+<script>
+
+//Progress bar Start.....................................
+document.addEventListener("DOMContentLoaded", function () {
+        let progressPopup = document.getElementById("progress-popup");
+        let progressBar = document.getElementById("progress-bar");
+
+        function startProgress() {
+            progressPopup.style.display = "block";
+            progressBar.style.width = "0%";
+
+            let progress = 0;
+            let interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 90) progress = 90; // Hold at 90% until fully loaded
+                progressBar.style.width = progress + "%";
+            }, 300);
+
+            window.addEventListener("load", () => {
+                clearInterval(interval);
+                progressBar.style.width = "100%";
+                setTimeout(() => {
+                    progressPopup.style.animation = "fadeOut 0.5s";
+                    setTimeout(() => {
+                        progressPopup.style.display = "none";
+                        progressPopup.style.animation = ""; // Reset animation
+                    }, 500);
+                }, 500);
+            });
+        }
+
+        // Show popup on form submission
+        document.querySelectorAll(".scraper-form").forEach(form => {
+            form.addEventListener("submit", function () {
+                startProgress();
+            });
+        });
+
+
+
+        // Show popup on page navigation
+        window.addEventListener("beforeunload", function () {
+            startProgress();
+        });
+    });
+    //Progress bar end..................................................
+
+
+  function openModal(id) {
+    document.getElementById(`emailModal${id}`).classList.remove('hidden');
+  }
+
+  function closeModal(id) {
+    document.getElementById(`emailModal${id}`).classList.add('hidden');
+  }
+//pagination start
+  document.addEventListener("DOMContentLoaded", function () {
+      const rowsPerPage = 10; // Number of rows per page
+      const table = document.querySelector(".table-auto tbody");
+      const rows = Array.from(table.querySelectorAll("tr"));
+      const paginationContainer = document.createElement("div");
+      paginationContainer.className = "flex justify-center mt-4";
+  
+      function renderTable(page) {
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+  
+        rows.forEach((row, index) => {
+          row.style.display = index >= start && index < end ? "table-row" : "none";
+        });
+      }
+  
+      function renderPagination() {
+        const totalPages = Math.ceil(rows.length / rowsPerPage);
+        paginationContainer.innerHTML = "";
+  
+        for (let i = 1; i <= totalPages; i++) {
+          const button = document.createElement("button");
+          button.textContent = i;
+          button.className = "px-3 py-1 mx-1 bg-teal-600 rounded hover:bg-teal-600 text-white";
+  
+          button.addEventListener("click", () => {
+            renderTable(i);
+            document.querySelectorAll(".pagination-button").forEach(btn => btn.classList.remove("bg-yellow-600", "text-white"));
+            button.classList.add("bg-yellow-600", "text-white");
+          });
+  
+          if (i === 1) {
+            button.classList.add("bg-yellow-600", "text-white");
+          }
+  
+          button.classList.add("pagination-button");
+          paginationContainer.appendChild(button);
+        }
+      }
+  
+      table.parentElement.insertAdjacentElement("afterend", paginationContainer);
+      renderTable(1);
+      renderPagination();
+    });
+    //Pagination end
+
+  // Export to Excel functionality
+    document.addEventListener("DOMContentLoaded", function () {
+      const exportButtons = document.querySelectorAll("[id^='export-excel']");
+  
+      exportButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          const resultId = this.id.replace("export-excel", "");
+          const emailTable = document.getElementById(`email-table${resultId}`);
+  
+          if (emailTable) {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.table_to_sheet(emailTable);
+            XLSX.utils.book_append_sheet(wb, ws, "Emails");
+  
+            // Fetching keyword, country, and email count dynamically
+            const keyword = document.querySelector(`#emailModal${resultId} h5`).textContent.split('"')[1];
+            const country = document.querySelector(`#emailModal${resultId} p strong`).nextSibling.textContent.trim();
+            const emailCount = emailTable.querySelectorAll("tbody tr").length;
+  
+            const filename = `${keyword}-${country}-${emailCount}_emails.xlsx`;
+            XLSX.writeFile(wb, filename);
+          } else {
+            alert("Email table not found!");
+          }
+        });
+      });
+    });
+  </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+
+
+{% endblock %}

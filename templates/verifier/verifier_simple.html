@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch-All Mail Checker</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-envelope-open-text"></i> vNode Email Verifier</h1>
+            <p>Verify catch-all email configurations and test email deliverability</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Email Input Section -->
+            <div class="input-section">
+                <h2><i class="fas fa-envelope"></i> Email Configuration</h2>
+                
+                <!-- Single/Multiple Email Input -->
+                <div class="input-tabs">
+                    <button class="tab-btn active" id="singleTab">Single Email</button>
+                    <button class="tab-btn" id="multipleTab">Multiple Emails</button>
+                    <button class="tab-btn" id="fileTab">File Upload</button>
+                </div>
+
+                <!-- Single Email Input -->
+                <div class="input-panel active" id="singlePanel">
+                    <div class="form-group">
+                        <label for="singleEmail">Email to check:</label>
+                        <input type="email" id="singleEmail" placeholder="test@example.com" />
+                    </div>
+                </div>
+
+                <!-- Multiple Emails Input -->
+                <div class="input-panel" id="multiplePanel">
+                    <div class="form-group">
+                        <label for="multipleEmails">Enter multiple emails (one per line):</label>
+                        <textarea id="multipleEmails" placeholder="test1@example.com&#10;test2@example.com&#10;test3@example.com" rows="6"></textarea>
+                    </div>
+                    <div class="email-count">
+                        <span id="emailCount">0 emails entered</span>
+                    </div>
+                </div>
+
+                <!-- File Upload Input -->
+                <div class="input-panel" id="filePanel">
+                    <div class="form-group">
+                        <label for="fileInput">Upload CSV or Excel file:</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose CSV or Excel file</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="check-controls">
+                    <button id="checkBtn" class="btn-primary">
+                        <i class="fas fa-search"></i> Check Emails
+                    </button>
+                    <button id="clearBtn" class="btn-secondary" style="display: none;">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2><i class="fas fa-chart-line"></i> Check Results</h2>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container" id="progressContainer" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progressText">Checking emails...</span>
+                        <span id="progressCount">0/0</span>
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="summary-stats" id="summaryStats" style="display: none;">
+                    <div class="stat-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <span class="stat-number" id="totalEmails">0</span>
+                            <span class="stat-label">Total Emails</span>
+                        </div>
+                    </div>
+                    <div class="stat-item success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <span class="stat-number" id="validEmails">0</span>
+                            <span class="stat-label">Valid</span>
+                        </div>
+                    </div>
+                    <div class="stat-item warning">
+                        <i class="fas fa-inbox"></i>
+                        <div>
+                            <span class="stat-number" id="catchAllEmails">0</span>
+                            <span class="stat-label">Catch-All</span>
+                        </div>
+                    </div>
+                    <div class="stat-item error">
+                        <i class="fas fa-times-circle"></i>
+                        <div>
+                            <span class="stat-number" id="invalidEmails">0</span>
+                            <span class="stat-label">Invalid</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="results-table-container" id="resultsTableContainer" style="display: none;">
+                    <div class="results-table-wrapper">
+                        <table class="results-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Checking mail configuration...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/mailChecker.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>

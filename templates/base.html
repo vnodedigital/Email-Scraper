@@ -1,0 +1,75 @@
+{% load static tailwind_tags %}
+{% load django_browser_reload %}
+{% if debug %}
+    {% django_browser_reload_script %}
+{% endif %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% tailwind_css %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Scraper Home</title>
+ 
+    {% block head %} {% endblock %}
+    
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    {% if messages %}
+    <div class="mb-4" style="position:absolute; top:135px; left: 50%; transform: translate(-50%, -50%); z-index: 999;">
+      {% for message in messages %}
+      {% if "error" in message.tags %}
+          <div class="m-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative max-w-lg mx-auto" role="alert">
+              <!-- <strong class="font-bold">Error:</strong> -->
+              <span class="block sm:inline">{{ message }}</span>
+              <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none';">
+                  <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <title>Close</title>
+                      <path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 10-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 101.414 1.414L10 11.414l2.934 2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z"/>
+                  </svg>
+              </button>
+          </div>
+      {% else %}
+          <div class="m-2 bg-teal-500 border border-teal-800 text-white px-4 py-3 rounded relative max-w-lg mx-auto" role="alert">
+              <!-- <strong class="font-bold">Success:</strong> -->
+              <span class="block sm:inline">{{ message }}</span>
+              <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none';">
+                  <svg class="fill-current h-6 w-6 text-white" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <title>Close</title>
+                      <path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 10-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 101.414 1.414L10 11.414l2.934 2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z"/>
+                  </svg>
+              </button>
+          </div>
+      {% endif %}
+  {% endfor %}
+    </div>
+{% endif %}
+
+    <div >
+        {% block body %} {% endblock %}
+    </div>
+
+    
+        
+    
+        <footer>
+            <div class="text-center p-2" style="background-color: rgba(0, 0, 0, 0.05);">
+                © 2025 Copyright:
+                <a class="text-reset fw-bold" href="https://vnode.digital/">vNode.Digital</a>
+              </div>
+        </footer>
+
+ 
+<style>
+    button, a {
+        cursor: pointer;
+    }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</body>
+</html>
