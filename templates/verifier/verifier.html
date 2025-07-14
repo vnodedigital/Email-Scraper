@@ -1,14 +1,14 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch-All Mail Checker</title>
+{% block head %}
+<title>Email Verifier</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
+{% endblock %}
+
+{% block body %} 
+
+
     <div class="container">
         <header>
             <h1><i class="fas fa-envelope-open-text"></i> vNode Email Verifyer</h1>
@@ -246,5 +246,6 @@
 
     <script src="{% static 'js/mailChecker.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</body>
-</html>
+
+
+{% endblock body %}
