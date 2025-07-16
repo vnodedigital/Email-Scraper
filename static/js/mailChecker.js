@@ -4,6 +4,7 @@ class CatchAllMailChecker {
         this.currentResults = [];
         this.isChecking = false;
         this.originalRows = []; // Store original file rows with extra columns
+        this.lowCreditWarningShown = false; // Track if low credit warning has been shown
         this.init();
     }
     
@@ -11,6 +12,26 @@ class CatchAllMailChecker {
         this.setupEventListeners();
         this.updateHistoryDisplay();
         this.setupTabs();
+        this.loadAndDisplayCredits(); // Load credits on initialization
+    }
+
+    // Load and display credits on page load
+    async loadAndDisplayCredits() {
+        try {
+            const creditsData = await this.checkCredits();
+            if (creditsData) {
+                this.displayCredits(creditsData.verify_credits);
+                
+                // Show initial low credit warning if needed
+                if (creditsData.verify_credits <= 5 && creditsData.verify_credits > 0) {
+                    setTimeout(() => {
+                        this.showCreditAlert(`You have ${creditsData.verify_credits} credits remaining. Consider purchasing more credits for uninterrupted email verification.`, 'warning');
+                    }, 2000); // Show after 2 seconds
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load credits:', error);
+        }
     }
     
     setupEventListeners() {
@@ -261,6 +282,25 @@ class CatchAllMailChecker {
             return;
         }
         
+        // Check initial credits
+        const initialCredits = await this.checkCredits();
+        if (!initialCredits) {
+            this.showCreditAlert('Unable to check credits. Please try again later.', 'error');
+            return;
+        }
+        
+        if (initialCredits.verify_credits <= 0) {
+            this.showCreditAlert('Your credits are 0. Please purchase more credits to continue email verification.', 'error');
+            return;
+        }
+        
+        if (emails.length > initialCredits.verify_credits) {
+            const proceed = confirm(`You have ${initialCredits.verify_credits} credits but want to check ${emails.length} emails. Only ${initialCredits.verify_credits} emails will be checked. Continue?`);
+            if (!proceed) {
+                return;
+            }
+        }
+        
         if (emails.length > 100) {
             if (!confirm(`You're about to check ${emails.length} emails. This may take a while. Continue?`)) {
                 return;
@@ -275,35 +315,88 @@ class CatchAllMailChecker {
         
         const totalEmails = emails.length;
         let processedEmails = 0;
+        let currentCredits = initialCredits.verify_credits;
         
         this.updateProgress(0, totalEmails);
         
         try {
             for (let i = 0; i < emails.length; i++) {
                 const email = emails[i];
-                const result = await this.checkWithBackend(email);
                 
-                // Attach original row if available
-                if (this.originalRows && this.originalRows.length) {
-                    const orig = this.originalRows.find(r => r.__email === email);
-                    if (orig) result._original = orig;
+                // Check credits before each verification
+                if (currentCredits <= 0) {
+                    this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                    break;
                 }
                 
-                this.currentResults.push(result);
-                processedEmails++;
-                
-                this.updateProgress(processedEmails, totalEmails);
-                this.updateResultsDisplay();
+                try {
+                    const result = await this.checkWithBackend(email);
+                    
+                    // Update current credits from response
+                    if (result.remaining_credits !== undefined) {
+                        currentCredits = result.remaining_credits;
+                        this.displayCredits(currentCredits);
+                        
+                        // Show low credit warning
+                        if (currentCredits <= 10 && currentCredits > 0) {
+                            // Only show warning once per session
+                            if (!this.lowCreditWarningShown) {
+                                this.showCreditAlert(`Low credit warning: You have ${currentCredits} credits remaining. Consider purchasing more credits to continue verification.`, 'warning');
+                                this.lowCreditWarningShown = true;
+                            }
+                        }
+                    }
+                    
+                    // Attach original row if available
+                    if (this.originalRows && this.originalRows.length) {
+                        const orig = this.originalRows.find(r => r.__email === email);
+                        if (orig) result._original = orig;
+                    }
+                    
+                    this.currentResults.push(result);
+                    processedEmails++;
+                    
+                    this.updateProgress(processedEmails, totalEmails);
+                    this.updateResultsDisplay();
+                    
+                    // Check if credits are exhausted
+                    if (currentCredits <= 0) {
+                        this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                        break;
+                    }
+                    
+                } catch (error) {
+                    if (error.message.includes('INSUFFICIENT_CREDITS')) {
+                        this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                        break;
+                    }
+                    
+                    // For other errors, add error result and continue
+                    this.currentResults.push({
+                        email: email,
+                        status: 'error',
+                        reason: error.message,
+                        score: 0.0
+                    });
+                    processedEmails++;
+                    this.updateProgress(processedEmails, totalEmails);
+                    this.updateResultsDisplay();
+                }
             }
             
             const checkResult = {
                 timestamp: new Date().toISOString(),
-                totalEmails: emails.length,
+                totalEmails: processedEmails,
                 results: this.currentResults,
                 summary: this.calculateSummary(this.currentResults)
             };
             
             this.addToHistory(checkResult);
+            
+            // Show success message
+            if (processedEmails > 0) {
+                this.showSuccessMessage(processedEmails, currentCredits);
+            }
         } catch (error) {
             console.error('Bulk check failed:', error);
             alert('An error occurred during the check. Please try again.');
@@ -321,7 +414,7 @@ class CatchAllMailChecker {
         return await this.checkWithBackend(email);
     }
     
-    // Updated to use Django REST API
+    // Updated to use Django REST API with credit checking
     async checkWithBackend(email, retries = 2) {
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
@@ -352,6 +445,11 @@ class CatchAllMailChecker {
                 });
                 
                 if (!response.ok) {
+                    if (response.status === 402) {
+                        // Payment required - insufficient credits
+                        const errorData = await response.json();
+                        throw new Error(`INSUFFICIENT_CREDITS: ${errorData.message || 'Insufficient verify credits'}`);
+                    }
                     const errorText = await response.text();
                     throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
@@ -359,6 +457,10 @@ class CatchAllMailChecker {
                 const data = await response.json();
                 return data;
             } catch (e) {
+                if (e.message.includes('INSUFFICIENT_CREDITS')) {
+                    // Don't retry on insufficient credits
+                    throw e;
+                }
                 if (attempt === retries) {
                     return { email, status: 'error', reason: e.message };
                 }
@@ -367,6 +469,73 @@ class CatchAllMailChecker {
         }
     }
     
+    // Method to check user's current credits
+    async checkCredits() {
+        try {
+            let csrfToken = '';
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfInput) {
+                csrfToken = csrfInput.value;
+            } else {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        csrfToken = value;
+                        break;
+                    }
+                }
+            }
+            
+            const response = await fetch('/verifier/api/check-credits/', {
+                method: 'GET',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (e) {
+            console.error('Failed to check credits:', e);
+            return null;
+        }
+    }
+
+    // Method to display credit information
+    displayCredits(credits) {
+        console.log(`Remaining credits: ${credits}`);
+        
+        // Update any credit display elements
+        const creditElements = document.querySelectorAll('.credits-display');
+        creditElements.forEach(element => {
+            element.textContent = credits;
+            
+            // Remove existing credit classes
+            element.classList.remove('credits-high', 'credits-medium', 'credits-low');
+            
+            // Add appropriate class based on credit amount
+            if (credits >= 100) {
+                element.classList.add('credits-high');
+            } else if (credits >= 10) {
+                element.classList.add('credits-medium');
+            } else {
+                element.classList.add('credits-low');
+            }
+        });
+        
+        // Update page title for low credits
+        const pageTitle = document.querySelector('title');
+        if (pageTitle && credits <= 10) {
+            pageTitle.textContent = `(${credits} credits) Email Verifier`;
+        }
+    }
+
     // Risk assessment for each result
     getRiskLevel(r) {
         // Minimum safe conditions
@@ -645,6 +814,301 @@ class CatchAllMailChecker {
         `;
         
         showDetailsModal(result.email, detailsHtml);
+    }
+    
+    // Create and show professional credit alert modal
+    showCreditAlert(message, type = 'warning') {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('creditAlertModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'creditAlertModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-out;
+        `;
+
+        // Define colors and icons based on type
+        let bgColor, iconColor, icon, borderColor;
+        switch(type) {
+            case 'error':
+                bgColor = '#fee2e2';
+                iconColor = '#dc2626';
+                icon = '⚠️';
+                borderColor = '#fca5a5';
+                break;
+            case 'warning':
+                bgColor = '#fef3c7';
+                iconColor = '#d97706';
+                icon = '⚠️';
+                borderColor = '#fcd34d';
+                break;
+            case 'info':
+                bgColor = '#dbeafe';
+                iconColor = '#2563eb';
+                icon = 'ℹ️';
+                borderColor = '#93c5fd';
+                break;
+            default:
+                bgColor = '#fef3c7';
+                iconColor = '#d97706';
+                icon = '⚠️';
+                borderColor = '#fcd34d';
+        }
+
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                border-radius: 16px;
+                padding: 0;
+                min-width: 400px;
+                max-width: 500px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                border: 1px solid ${borderColor};
+                animation: slideIn 0.3s ease-out;
+                overflow: hidden;
+            ">
+                <!-- Header -->
+                <div style="
+                    background: ${bgColor};
+                    padding: 24px;
+                    border-bottom: 1px solid ${borderColor};
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                ">
+                    <div style="
+                        width: 48px;
+                        height: 48px;
+                        background: white;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 24px;
+                        color: ${iconColor};
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                    ">
+                        ${icon}
+                    </div>
+                    <div>
+                        <h3 style="
+                            margin: 0;
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #1f2937;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        ">Credit Alert</h3>
+                        <p style="
+                            margin: 4px 0 0 0;
+                            font-size: 14px;
+                            color: #6b7280;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        ">Verification Status</p>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div style="padding: 24px;">
+                    <p style="
+                        margin: 0 0 24px 0;
+                        font-size: 16px;
+                        color: #374151;
+                        line-height: 1.6;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    ">${message}</p>
+                    
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button id="creditAlertClose" style="
+                            background: #f3f4f6;
+                            color: #374151;
+                            border: 1px solid #d1d5db;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-size: 14px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                            Close
+                        </button>
+                        <button id="creditAlertPurchase" style="
+                            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-size: 14px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                            Purchase Credits
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from { 
+                    opacity: 0;
+                    transform: translateY(-20px) scale(0.95);
+                }
+                to { 
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(modal);
+
+        // Add event listeners
+        const closeBtn = modal.querySelector('#creditAlertClose');
+        const purchaseBtn = modal.querySelector('#creditAlertPurchase');
+
+        const closeModal = () => {
+            modal.style.animation = 'fadeOut 0.3s ease-out';
+            modal.querySelector('div').style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 300);
+        };
+
+        closeBtn.onclick = closeModal;
+        purchaseBtn.onclick = () => {
+            // You can redirect to purchase page or show purchase modal
+            window.location.href = '/package/'; // Adjust URL as needed
+        };
+
+        // Close on overlay click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
+
+        // Add fadeOut animation
+        style.textContent += `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            @keyframes slideOut {
+                from { 
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+                to { 
+                    opacity: 0;
+                    transform: translateY(-20px) scale(0.95);
+                }
+            }
+        `;
+    }
+    
+    // Show success message when verification is complete
+    showSuccessMessage(processedEmails, remainingCredits) {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            z-index: 10001;
+            animation: slideInRight 0.3s ease-out;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-width: 300px;
+        `;
+
+        modal.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="
+                    width: 32px;
+                    height: 32px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                ">✓</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;">Verification Complete</div>
+                    <div style="font-size: 12px; opacity: 0.9;">
+                        ${processedEmails} emails verified • ${remainingCredits} credits remaining
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { 
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to { 
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes slideOutRight {
+                from { 
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to { 
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(modal);
+
+        // Auto-remove after 4 seconds
+        setTimeout(() => {
+            modal.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 300);
+        }, 4000);
     }
 }
 

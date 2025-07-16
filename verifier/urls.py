@@ -11,5 +11,6 @@ urlpatterns = [
     # API routes
     path('api/', views.api_root, name='api_root'),
     path('api/check-email/', views.check_email_api, name='check_email_api'),
+    path('api/check-credits/', views.check_credits, name='check_credits'),
     path('api/health/', views.health_check, name='health_check'),
 ]

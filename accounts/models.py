@@ -33,7 +33,7 @@ class UserProfile(models.Model):
     
     # Usage Tracking
     email_credits = models.IntegerField(default=100)  # could reset monthly based on plan
-    
+    verify_credits = models.IntegerField(default=100)  # could reset monthly based on plan
     total_scrapes = models.IntegerField(default=0)
     last_login_ip = models.GenericIPAddressField(blank=True, null=True)
 

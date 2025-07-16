@@ -4,6 +4,29 @@
 <title>Email Verifier</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .credits-high {
+            background-color: #22c55e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .credits-medium {
+            background-color: #eab308;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .credits-low {
+            background-color: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
 {% endblock %}
 
 {% block body %} 
@@ -12,7 +35,22 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-envelope-open-text"></i> vNode Email Verifyer</h1>
-            <p>Verify catch-all email configurations and test email deliverability</p>
+            <p>Verify you mail with advance facility</p>
+
+           <div>
+            <span>Remaining credits: 
+                <span class="credits-display
+                    {% if user_profile.verify_credits >= 100 %}
+                        credits-high
+                    {% elif user_profile.verify_credits >= 10 %}
+                        credits-medium
+                    {% else %}
+                        credits-low
+                    {% endif %}
+                ">{{ user_profile.verify_credits }}</span>
+            </span>
+           </div>
+
         </header>
 
         <div class="main-content">
@@ -245,6 +283,7 @@
     </div>
 
     <script src="{% static 'js/mailChecker.js' %}"></script>
+     <!-- <script src="{% static 'js/mailChecker_original.js' %}"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 

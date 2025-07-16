@@ -22,11 +22,13 @@ import dns.resolver
 import json
 from .utils import smtp_check
 from .serializers import EmailVerificationSerializer, EmailVerificationResponseSerializer
+from accounts.models import UserProfile
 
 
 @login_required
 def verify_emails(request):
-    return render(request, 'verifier/verifier.html')
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+    return render(request, 'verifier/verifier.html', {'user_profile': user_profile})
 
 
 @login_required
@@ -44,9 +46,36 @@ def check_email_api(request):
     if serializer.is_valid():
         email = serializer.validated_data['email']
         
+        # Get user profile and check credits
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {"error": "User profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if user has enough verify credits
+        if user_profile.verify_credits <= 0:
+            return Response(
+                {
+                    "error": "Insufficient verify credits",
+                    "message": "You need at least 1 verify credit to verify an email address",
+                    "current_credits": user_profile.verify_credits
+                },
+                status=status.HTTP_402_PAYMENT_REQUIRED
+            )
+        
         try:
             # Perform email verification
             result = smtp_check(email)
+            
+            # Deduct 1 verify credit after successful verification
+            user_profile.verify_credits -= 1
+            user_profile.save()
+            
+            # Add remaining credits to the response
+            result['remaining_credits'] = user_profile.verify_credits
             
             # Serialize the response
             response_serializer = EmailVerificationResponseSerializer(data=result)
@@ -68,6 +97,28 @@ def check_email_api(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_credits(request):
+    """
+    API endpoint to check user's verify credits
+    """
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        return Response({
+            "user": request.user.username,
+            "verify_credits": user_profile.verify_credits,
+            "email_credits": user_profile.email_credits,
+            "subscription_package": user_profile.subscription_package,
+            "status": user_profile.status
+        }, status=status.HTTP_200_OK)
+    except UserProfile.DoesNotExist:
+        return Response(
+            {"error": "User profile not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(['GET'])
 def health_check(request):
     """
     Health check endpoint
@@ -85,6 +136,7 @@ def api_root(request):
         "status": "ok",
         "endpoints": {
             "check_email": "/api/check-email/",
+            "check_credits": "/api/check-credits/",
             "health": "/api/health/",
         }
     }, status=status.HTTP_200_OK)

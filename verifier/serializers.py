@@ -26,3 +26,4 @@ class EmailVerificationResponseSerializer(serializers.Serializer):
     spf = serializers.CharField(allow_null=True, allow_blank=True)
     dmarc = serializers.CharField(allow_null=True, allow_blank=True)
     dkim = serializers.CharField(allow_null=True, allow_blank=True)
+    remaining_credits = serializers.IntegerField(required=False)
