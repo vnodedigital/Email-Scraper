@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verifier API Example</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{% static 'js/mailChecker.js' %}"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h1 class="text-3xl font-bold text-center mb-8">Email Verifier API Example</h1>
+                
+                <!-- Single Email Check -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4">Single Email Verification</h2>
+                    <div class="flex gap-4 mb-4">
+                        <input type="email" id="singleEmail" placeholder="Enter email to verify" 
+                               class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="checkSingleEmail()" 
+                                class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Verify
+                        </button>
+                    </div>
+                    <div id="singleResult" class="hidden">
+                        <h3 class="font-semibold mb-2">Result:</h3>
+                        <pre id="singleResultContent" class="bg-gray-100 p-4 rounded text-sm overflow-x-auto"></pre>
+                    </div>
+                </div>
+
+                <!-- Multiple Emails Check -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4">Multiple Email Verification</h2>
+                    <div class="mb-4">
+                        <textarea id="multipleEmails" placeholder="Enter emails, one per line" 
+                                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                  rows="5"></textarea>
+                    </div>
+                    <div class="flex gap-4 mb-4">
+                        <button onclick="checkMultipleEmails()" 
+                                class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                            Verify All
+                        </button>
+                        <button onclick="exportResults()" 
+                                class="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                            Export CSV
+                        </button>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div id="progressContainer" class="hidden mb-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-2">
+                            <span id="progressText">0/0 (0%)</span>
+                            <span id="currentEmail">-</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Table -->
+                    <div id="resultsContainer" class="hidden">
+                        <div id="resultsStats" class="mb-4"></div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsTableBody" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Check -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4">API Health Check</h2>
+                    <button onclick="checkHealth()" 
+                            class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        Check API Health
+                    </button>
+                    <div id="healthResult" class="hidden mt-4">
+                        <div id="healthStatus" class="p-4 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg max-w-md w-full mx-4 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Email Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let emailChecker;
+        let currentResults = [];
+
+        // Initialize the email checker when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            emailChecker = new EmailChecker();
+        });
+
+        // Single email verification
+        async function checkSingleEmail() {
+            const emailInput = document.getElementById('singleEmail');
+            const email = emailInput.value.trim();
+            
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+
+            try {
+                const result = await emailChecker.verifyEmail(email);
+                
+                document.getElementById('singleResult').classList.remove('hidden');
+                document.getElementById('singleResultContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error verifying email: ' + error.message);
+            }
+        }
+
+        // Multiple emails verification
+        async function checkMultipleEmails() {
+            const emailsInput = document.getElementById('multipleEmails');
+            const emailsText = emailsInput.value.trim();
+            
+            if (!emailsText) {
+                alert('Please enter at least one email address');
+                return;
+            }
+
+            const emails = emailsText.split('\n').map(email => email.trim()).filter(email => email);
+            
+            if (emails.length === 0) {
+                alert('No valid emails found');
+                return;
+            }
+
+            // Show progress container
+            document.getElementById('progressContainer').classList.remove('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+
+            try {
+                const results = await emailChecker.verifyEmails(emails, (progress) => {
+                    updateProgress(progress);
+                });
+
+                currentResults = results;
+                displayResults(results);
+            } catch (error) {
+                alert('Error verifying emails: ' + error.message);
+            } finally {
+                document.getElementById('progressContainer').classList.add('hidden');
+            }
+        }
+
+        // Update progress bar
+        function updateProgress(progress) {
+            document.getElementById('progressBar').style.width = `${progress.percentage}%`;
+            document.getElementById('progressText').textContent = `${progress.current}/${progress.total} (${progress.percentage}%)`;
+            document.getElementById('currentEmail').textContent = progress.currentEmail;
+        }
+
+        // Display results in table
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            const tableBody = document.getElementById('resultsTableBody');
+            const statsDiv = document.getElementById('resultsStats');
+
+            container.classList.remove('hidden');
+            tableBody.innerHTML = '';
+
+            // Update statistics
+            const stats = emailChecker.getStatistics(results);
+            statsDiv.innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600">${stats.valid}</div>
+                        <div class="text-sm text-green-600">Valid</div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-red-600">${stats.invalid}</div>
+                        <div class="text-sm text-red-600">Invalid</div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-yellow-600">${stats.catchAll}</div>
+                        <div class="text-sm text-yellow-600">Catch-All</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-600">${stats.averageScore}</div>
+                        <div class="text-sm text-gray-600">Avg Score</div>
+                    </div>
+                </div>
+            `;
+
+            // Populate table
+            results.forEach((result, index) => {
+                const formatted = emailChecker.formatResult(result);
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${formatted.email}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${formatted.statusColor}">
+                        ${formatted.statusIcon} ${formatted.status}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${formatted.scoreColor}">
+                        ${formatted.scorePercentage}%
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${formatted.reason || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="showDetails(${index})" 
+                                class="text-blue-600 hover:text-blue-900">
+                            Details
+                        </button>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Show details modal
+        function showDetails(index) {
+            const result = currentResults[index];
+            if (!result) return;
+
+            const modal = document.getElementById('detailsModal');
+            const modalContent = document.getElementById('modalContent');
+            const formatted = emailChecker.formatResult(result);
+
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="border-b pb-4">
+                        <h3 class="text-lg font-semibold">${formatted.email}</h3>
+                        <p class="text-sm ${formatted.statusColor}">
+                            ${formatted.statusIcon} ${formatted.status}
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-medium text-gray-700">Score</h4>
+                            <p class="${formatted.scoreColor}">${formatted.scorePercentage}%</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700">Reason</h4>
+                            <p class="text-sm">${formatted.reason || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-medium text-gray-700">Disposable</h4>
+                            <p class="${formatted.is_disposable ? 'text-red-600' : 'text-green-600'}">
+                                ${formatted.is_disposable ? 'Yes' : 'No'}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700">Free Provider</h4>
+                            <p class="${formatted.is_free_provider ? 'text-yellow-600' : 'text-green-600'}">
+                                ${formatted.is_free_provider ? 'Yes' : 'No'}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700">Role Based</h4>
+                            <p class="${formatted.is_role_based ? 'text-red-600' : 'text-green-600'}">
+                                ${formatted.is_role_based ? 'Yes' : 'No'}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700">Catch-All</h4>
+                            <p class="${formatted.is_catch_all ? 'text-yellow-600' : 'text-green-600'}">
+                                ${formatted.is_catch_all ? 'Yes' : 'No'}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h4 class="font-medium text-gray-700">DNS Records</h4>
+                        <div class="text-sm space-y-1">
+                            <p><strong>SPF:</strong> ${formatted.spf || 'Not found'}</p>
+                            <p><strong>DMARC:</strong> ${formatted.dmarc || 'Not found'}</p>
+                            <p><strong>DKIM:</strong> ${formatted.dkim || 'Not found'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        // Export results to CSV
+        function exportResults() {
+            if (currentResults.length === 0) {
+                alert('No results to export');
+                return;
+            }
+
+            emailChecker.exportToCSV(currentResults);
+        }
+
+        // Health check
+        async function checkHealth() {
+            try {
+                const isHealthy = await emailChecker.healthCheck();
+                const healthResult = document.getElementById('healthResult');
+                const healthStatus = document.getElementById('healthStatus');
+                
+                healthResult.classList.remove('hidden');
+                
+                if (isHealthy) {
+                    healthStatus.className = 'p-4 rounded-lg bg-green-50 text-green-700';
+                    healthStatus.textContent = '✓ API is healthy and running';
+                } else {
+                    healthStatus.className = 'p-4 rounded-lg bg-red-50 text-red-700';
+                    healthStatus.textContent = '✗ API is not responding';
+                }
+            } catch (error) {
+                const healthResult = document.getElementById('healthResult');
+                const healthStatus = document.getElementById('healthStatus');
+                
+                healthResult.classList.remove('hidden');
+                healthStatus.className = 'p-4 rounded-lg bg-red-50 text-red-700';
+                healthStatus.textContent = '✗ Error checking API health: ' + error.message;
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('detailsModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

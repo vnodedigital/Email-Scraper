@@ -35,6 +35,7 @@ Django==5.1.7
 django-browser-reload==1.18.0
 django-tailwind==3.7.0
 django-unfold==0.55.3
+djangorestframework==3.16.0
 dnspython==2.7.0
 email_validator==2.2.0
 et_xmlfile==2.0.0
