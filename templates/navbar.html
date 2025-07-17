@@ -1,29 +1,428 @@
 {% load static %}
-<nav class="bg-white shadow-md sticky top-0 z-50">
-  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+<style>
+/* Navbar CSS equivalent to Tailwind classes */
+.navbar {
+    background-color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-logo {
+    width: 7rem;
+}
+
+.navbar-menu {
+    display: none;
+    margin-left: 1.5rem;
+}
+
+.navbar-menu-items {
+    display: flex;
+    gap: 1rem;
+}
+
+.navbar-link {
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #0d9488;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.navbar-link:hover {
+    background-color: #134e4a;
+    color: white;
+}
+
+.navbar-user-section {
+    position: relative;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.navbar-reward-btn {
+    font-size: 25px;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.navbar-reward-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-reward-btn.text-yellow-600 {
+    color: #ca8a04;
+}
+
+.navbar-reward-btn.text-yellow-600:hover {
+    color: #92400e;
+}
+
+.navbar-reward-btn.text-teal-600 {
+    color: #0d9488;
+}
+
+.navbar-reward-btn.text-teal-600:hover {
+    color: #134e4a;
+}
+
+.navbar-user-btn {
+    color: #0d9488;
+    font-size: 25px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.navbar-user-btn:focus {
+    outline: none;
+}
+
+.navbar-user-btn i:hover {
+    color: #134e4a;
+}
+
+.navbar-dropdown {
+    padding: 0.5rem;
+    position: absolute;
+    right: 0;
+    margin-top: 3rem;
+    width: 10rem;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 50;
+}
+
+.navbar-dropdown.hidden {
+    display: none;
+}
+
+.navbar-dropdown li {
+    list-style: none;
+}
+
+.navbar-dropdown a {
+    display: block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.navbar-dropdown a:hover {
+    background-color: #134e4a;
+    color: white;
+}
+
+.navbar-dropdown a.login-hover:hover {
+    background-color: #ccfbf1;
+    color: #134e4a;
+}
+
+.navbar-dropdown i {
+    margin-right: 0.5rem;
+    color: #ca8a04;
+}
+
+/* Mobile Hamburger Menu */
+.mobile-menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 60;
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 3px;
+    background-color: #0d9488;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.mobile-menu-toggle.active .hamburger-line {
+    background-color: #0d9488;
+}
+
+/* Mobile Sidebar */
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    z-index: 70;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+.mobile-sidebar-open {
+    transform: translateX(0) !important;
+}
+
+.mobile-sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+}
+
+.mobile-sidebar-logo {
+    width: 120px;
+    height: auto;
+}
+
+.mobile-menu-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.mobile-menu-close:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.mobile-sidebar-content {
+    padding: 1rem 0;
+}
+
+.mobile-menu-section {
+    margin-bottom: 1.5rem;
+}
+
+.mobile-menu-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.mobile-menu-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.mobile-menu-item:hover {
+    background-color: #f0fdfa;
+    color: #0d9488;
+    border-left-color: #0d9488;
+}
+
+.mobile-menu-item.active {
+    background-color: #0d9488;
+    color: white;
+    border-left-color: #0f766e;
+}
+
+.mobile-menu-item i {
+    margin-right: 0.75rem;
+    width: 20px;
+    color: #0d9488;
+}
+
+.mobile-menu-item:hover i,
+.mobile-menu-item.active i {
+    color: currentColor;
+}
+
+.mobile-user-section {
+    border-top: 1px solid #e5e7eb;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.mobile-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.mobile-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.mobile-user-details h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.mobile-user-details p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.mobile-reward-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.mobile-reward-icon {
+    font-size: 20px;
+    color: #d97706;
+}
+
+.mobile-reward-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #92400e;
+    font-weight: 500;
+}
+
+.mobile-reward-btn {
+    background: #d97706;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-reward-btn:hover {
+    background: #b45309;
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 60;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.mobile-overlay-active {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Body scroll lock when mobile menu is open */
+body.mobile-menu-active {
+    overflow: hidden;
+}
+
+/* Responsive design */
+@media (min-width: 768px) {
+    .navbar-menu {
+        display: block;
+    }
+    
+    .mobile-menu-toggle {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .navbar-menu {
+        display: none;
+    }
+    
+    .mobile-menu-toggle {
+        display: flex;
+    }
+}
+</style>
+
+<nav class="navbar">
+  <div class="navbar-container">
     <!-- Logo -->
     <a href="{% url 'home' %}">
-      <img src="https://vnode.digital/wp-content/uploads/2025/04/scraper-logo.png" alt="logo" class="w-28">
+      <img src="https://vnode.digital/wp-content/uploads/2025/04/scraper-logo.png" alt="logo" class="navbar-logo">
     </a>
 
-    <div class="hidden sm:ml-6 sm:block">
-      <div class="flex space-x-4">
-        <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-        <a href="/"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Home</a>
-        <a href="{% url 'scraper:scraper'%}"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Scraper</a>
-        <a href="{% url 'package:package' %}"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Packages</a>
-        <a href="{% url 'verifier:verify_emails' %}"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">Email Verifier</a>
-        <a href="#"  class="rounded-md px-3 py-2 text-base font-medium text-teal-600 hover:bg-teal-800 hover:text-white">About</a>
+    <!-- Desktop Menu -->
+    <div class="navbar-menu">
+      <div class="navbar-menu-items">
+        <a href="/" class="navbar-link">Home</a>
+        <a href="{% url 'scraper:scraper'%}" class="navbar-link">Scraper</a>
+        <a href="{% url 'package:package' %}" class="navbar-link">Packages</a>
+        <a href="{% url 'verifier:verify_emails' %}" class="navbar-link">Email Verifier</a>
+        <a href="#" class="navbar-link">About</a>
       </div>
     </div>
 
-    <!-- User Dropdown -->
-    <div class="relative flex gap-3">
-      
+    <!-- Mobile & User Section -->
+    <div class="navbar-user-section">
       <form action="{% url 'accounts:claim_reward' %}" method="POST">
         {% csrf_token %}
-        <button type="submit" style="font-size: 25px; " 
-                class="{% if user.profile.last_reward_claim == today %}text-yellow-600 hover:text-yellow-800{% else %}text-teal-600 hover:text-teal-800{% endif %} py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+        <button type="submit" 
+                class="navbar-reward-btn {% if user.profile.last_reward_claim == today %}text-yellow-600{% else %}text-teal-600{% endif %}"
                 title="Daily Email Credits Rewards">
                 
                 <i class="fa fa-gift"></i>
@@ -32,34 +431,39 @@
       
       <button
         id="userDropdownButton"
-        class="text-teal-600 text-5xl focus:outline-none"
-        style="font-size: 25px; background-color: transparent;"
+        class="navbar-user-btn"
       >
-        <i class="fa fa-user-circle text-teal-600 hover:text-teal-800"></i>
+        <i class="fa fa-user-circle"></i>
       </button>
 
-      <ul id="userDropdown"
-          class="hidden p-2 absolute right-0 mt-12 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+      <!-- Mobile Hamburger Menu -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <ul id="userDropdown" class="navbar-dropdown hidden">
         {% if user.is_authenticated %}
           <li>
-            <a href="{% url 'accounts:user_profile' %}" class="block px-4 py-2 hover:bg-teal-800 hover:text-white rounded-md">
-              <i class="fa fa-user mr-2 text-yellow-600"></i>Profile
+            <a href="{% url 'accounts:user_profile' %}">
+              <i class="fa fa-user"></i>Profile
             </a>
           </li>
           <li>
-            <a href="{% url 'accounts:dashboard' %}" class="block px-4 py-2 hover:bg-teal-800 hover:text-white rounded-md">
-              <i class="fa fa-tachometer-alt mr-2 text-yellow-600"></i>Dashboard
+            <a href="{% url 'accounts:dashboard' %}">
+              <i class="fa fa-tachometer-alt"></i>Dashboard
             </a>
           </li>
           <li>
-            <a href="{% url 'accounts:custom_logout' %}" class="block px-4 py-2 hover:bg-teal-800 rounded-md">
-              <i class="fa fa-sign-out-alt mr-2 text-yellow-600"></i>Logout
+            <a href="{% url 'accounts:custom_logout' %}">
+              <i class="fa fa-sign-out-alt"></i>Logout
             </a>
           </li>
         {% else %}
           <li>
-            <a href="{% url 'accounts:custom_login' %}" class="block px-4 py-2 hover:bg-teal-100 rounded-md">
-              <i class="fa fa-sign-in-alt mr-2"></i>Login
+            <a href="{% url 'accounts:custom_login' %}" class="login-hover">
+              <i class="fa fa-sign-in-alt"></i>Login
             </a>
           </li>
         {% endif %}
@@ -68,23 +472,112 @@
   </div>
 </nav>
 
+<!-- Mobile Sidebar -->
+<div class="mobile-sidebar" id="mobile-sidebar">
+  <div class="mobile-sidebar-header">
+    <img src="https://vnode.digital/wp-content/uploads/2025/04/scraper-logo.png" alt="logo" class="mobile-sidebar-logo">
+    <button class="mobile-menu-close" id="mobile-menu-close">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="mobile-sidebar-content">
+    <!-- Navigation Section -->
+    <div class="mobile-menu-section">
+      <div class="mobile-menu-title">Navigation</div>
+      <a href="/" class="mobile-menu-item">
+        <i class="fas fa-home"></i>Home
+      </a>
+      <a href="{% url 'scraper:scraper'%}" class="mobile-menu-item">
+        <i class="fas fa-spider"></i>Scraper
+      </a>
+      <a href="{% url 'package:package' %}" class="mobile-menu-item">
+        <i class="fas fa-box"></i>Packages
+      </a>
+      <a href="{% url 'verifier:verify_emails' %}" class="mobile-menu-item">
+        <i class="fas fa-envelope-open-text"></i>Email Verifier
+      </a>
+      <a href="#" class="mobile-menu-item">
+        <i class="fas fa-info-circle"></i>About
+      </a>
+    </div>
 
+    <!-- User Section -->
+    {% if user.is_authenticated %}
+    <div class="mobile-user-section">
+      <div class="mobile-user-info">
+        <div class="mobile-user-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="mobile-user-details">
+          <h4>{{ user.first_name|default:user.username }}</h4>
+          <p>{{ user.email }}</p>
+        </div>
+      </div>
+
+      <!-- Daily Reward Section -->
+      <div class="mobile-reward-section">
+        <i class="fas fa-gift mobile-reward-icon"></i>
+        <div class="mobile-reward-text">Daily Reward</div>
+        <form action="{% url 'accounts:claim_reward' %}" method="POST" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="mobile-reward-btn">
+            {% if user.profile.last_reward_claim == today %}Claimed{% else %}Claim{% endif %}
+          </button>
+        </form>
+      </div>
+
+      <!-- User Menu Items -->
+      <div class="mobile-menu-section">
+        <div class="mobile-menu-title">Account</div>
+        <a href="{% url 'accounts:user_profile' %}" class="mobile-menu-item">
+          <i class="fas fa-user"></i>Profile
+        </a>
+        <a href="{% url 'accounts:dashboard' %}" class="mobile-menu-item">
+          <i class="fas fa-tachometer-alt"></i>Dashboard
+        </a>
+        <a href="{% url 'accounts:custom_logout' %}" class="mobile-menu-item">
+          <i class="fas fa-sign-out-alt"></i>Logout
+        </a>
+      </div>
+    </div>
+    {% else %}
+    <div class="mobile-user-section">
+      <div class="mobile-menu-section">
+        <div class="mobile-menu-title">Account</div>
+        <a href="{% url 'accounts:custom_login' %}" class="mobile-menu-item">
+          <i class="fas fa-sign-in-alt"></i>Login
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" id="mobile-overlay"></div>
+
+
+<!-- Load Mobile Menu Script -->
+<script src="{% static 'js/mobile-menu.js' %}"></script>
 
 <script>
-  // JavaScript to toggle the dropdown
+  // JavaScript to toggle the desktop dropdown
   document.addEventListener('DOMContentLoaded', function () {
     const dropdownButton = document.getElementById('userDropdownButton');
     const dropdownMenu = document.getElementById('userDropdown');
 
-    dropdownButton.addEventListener('click', function () {
-      dropdownMenu.classList.toggle('hidden');
-    });
+    if (dropdownButton && dropdownMenu) {
+      dropdownButton.addEventListener('click', function () {
+        dropdownMenu.classList.toggle('hidden');
+      });
 
-    // Close the dropdown if clicked outside
-    document.addEventListener('click', function (event) {
-      if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-        dropdownMenu.classList.add('hidden');
-      }
-    });
+      // Close the dropdown if clicked outside
+      document.addEventListener('click', function (event) {
+        if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+          dropdownMenu.classList.add('hidden');
+        }
+      });
+    }
   });
 </script>

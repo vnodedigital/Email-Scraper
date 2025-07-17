@@ -11,7 +11,7 @@ body {
     color: #333;
 }
 
-.container {
+.email-verifier-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
@@ -358,6 +358,7 @@ header p {
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
+    border-radius: 5px;
 }
 
 .tab-btn.active {
@@ -648,14 +649,6 @@ header p {
     transition: all 0.2s ease;
 }
 
-.action-btn.details {
-    background: #e6fffa;
-    color: #234e52;
-}
-
-.action-btn.details:hover {
-    background: #b2f5ea;
-}
 
 .modal-overlay {
     position: fixed;
@@ -710,7 +703,7 @@ header p {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    background: #3b82f6;
+    background: #373a3d;
     color: white;
     text-decoration: none;
 }
@@ -719,13 +712,7 @@ header p {
     background: #2563eb;
 }
 
-.action-btn.details {
-    background: #6b7280;
-}
 
-.action-btn.details:hover {
-    background: #4b5563;
-}
 
 .history-item {
     border: 1px solid #e5e7eb;
