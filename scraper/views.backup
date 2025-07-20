@@ -18,11 +18,6 @@ from django.shortcuts import render, redirect
 def scraper(request):
     return render(request, "scraper/scraper.html")
 
-@login_required
-def professional_scraper(request):
-    """Professional scraper with real-time progress tracking"""
-    return render(request, "scraper/professional-scraper.html")
-
 
 @login_required
 def scrape_specific(request):

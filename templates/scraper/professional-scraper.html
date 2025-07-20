@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<title>vNode Email Scraper</title>
+<link rel="stylesheet" href="{% static 'css/realtime-scraper.css' %}?v={{ request.META.REQUEST_TIME|default:'1' }}">
+<meta name="description" content="Advanced email scraping with real-time progress tracking and professional interface">
+{% endblock %}
+
+{% block body %}
+<div class="scraping-dashboard">
+    <!-- Particle Canvas for Background Animation -->
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="scraping-container">
+        <!-- Header Section -->
+        <header class="scraping-header">
+            <h1><i class="fas fa-robot"></i> vNode Email Scraper</h1>
+            <p>Advanced email extraction with real-time progress tracking and professional analytics</p>
+            
+            <div class="credits-section">
+                <i class="fas fa-coins"></i>
+                <span>Available Credits: <span class="credits-display">{{ user.profile.email_credits|default:0 }}</span></span>
+            </div>
+        </header>
+
+        <!-- Scraping Methods with Tabs -->
+        <div class="scraping-tabs-container">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="specific-url">
+                    <i class="fas fa-link"></i>
+                    <span>Specific URL</span>
+                </button>
+                <button class="tab-btn" data-tab="multilevel">
+                    <i class="fas fa-sitemap"></i>
+                    <span>Multi-Level</span>
+                </button>
+                <button class="tab-btn" data-tab="google">
+                    <i class="fab fa-google"></i>
+                    <span>Google Search</span>
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content-container">
+                <!-- Specific URL Scraping Tab -->
+                <div class="tab-content active" id="tab-specific-url">
+                    <div class="scraping-card" id="scraping-container-specific-url">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div>
+                                <h3 class="card-title">Specific URL Scraping</h3>
+                                <p class="card-description">Extract emails directly from a specific website URL with high precision</p>
+                            </div>
+                        </div>
+
+                        <form id="specific-url-form">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="form-label" for="specific-url">
+                                    <i class="fas fa-globe"></i> Target Website URL
+                                </label>
+                                <input 
+                                    type="url" 
+                                    id="specific-url" 
+                                    name="url" 
+                                    class="form-input" 
+                                    placeholder="https://example.com" 
+                                    required
+                                >
+                            </div>
+                            
+                            <button type="submit" class="scrape-btn">
+                                <i class="fas fa-play"></i> Start URL Scraping
+                            </button>
+                        </form>
+
+                        <!-- Results Container -->
+                        <div class="results-container" id="results-container-specific-url">
+                            <!-- Results will be populated here -->
+                        </div>
+
+                        <!-- Export Section -->
+                        <div class="export-section" id="export-section-specific-url" style="display: none;">
+                            <h4><i class="fas fa-download"></i> Export Results</h4>
+                            <div class="export-buttons">
+                                <button class="export-btn csv-btn" onclick="exportResults('specific-url', 'csv')">
+                                    <i class="fas fa-file-csv"></i> Export CSV
+                                </button>
+                                <button class="export-btn excel-btn" onclick="exportResults('specific-url', 'excel')">
+                                    <i class="fas fa-file-excel"></i> Export Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-level Scraping Tab -->
+                <div class="tab-content" id="tab-multilevel">
+                    <div class="scraping-card" id="scraping-container-multilevel">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                            <div>
+                                <h3 class="card-title">Multi-Level Scraping</h3>
+                                <p class="card-description">Deep crawl through multiple pages and subdomains for comprehensive email extraction</p>
+                            </div>
+                        </div>
+
+                        <form id="multilevel-form">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="form-label" for="multilevel-url">
+                                    <i class="fas fa-globe"></i> Starting Website URL
+                                </label>
+                                <input 
+                                    type="url" 
+                                    id="multilevel-url" 
+                                    name="url" 
+                                    class="form-input" 
+                                    placeholder="https://example.com" 
+                                    required
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="multilevel-depth">
+                                    <i class="fas fa-layer-group"></i> Crawl Depth Level
+                                </label>
+                                <select id="multilevel-depth" name="depth" class="form-select">
+                                    <option value="1">1 Level (Direct links)</option>
+                                    <option value="2" selected>2 Levels (Recommended)</option>
+                                    <option value="3">3 Levels (Deep crawl)</option>
+                                    <option value="4">4 Levels (Comprehensive)</option>
+                                    <option value="5">5 Levels (Maximum)</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="scrape-btn">
+                                <i class="fas fa-project-diagram"></i> Start Multi-Level Scraping
+                            </button>
+                        </form>
+
+                        <!-- Results Container -->
+                        <div class="results-container" id="results-container-multilevel">
+                            <!-- Results will be populated here -->
+                        </div>
+
+                        <!-- Export Section -->
+                        <div class="export-section" id="export-section-multilevel" style="display: none;">
+                            <h4><i class="fas fa-download"></i> Export Results</h4>
+                            <div class="export-buttons">
+                                <button class="export-btn csv-btn" onclick="exportResults('multilevel', 'csv')">
+                                    <i class="fas fa-file-csv"></i> Export CSV
+                                </button>
+                                <button class="export-btn excel-btn" onclick="exportResults('multilevel', 'excel')">
+                                    <i class="fas fa-file-excel"></i> Export Excel (.xls)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Search Scraping Tab -->
+                <div class="tab-content" id="tab-google">
+                    <div class="scraping-card" id="scraping-container-google">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div>
+                                <h3 class="card-title">Google Search Scraping</h3>
+                                <p class="card-description">Find emails from Google search results based on your keywords and location</p>
+                            </div>
+                        </div>
+
+                        <form id="google-form">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="form-label" for="google-keyword">
+                                    <i class="fas fa-search"></i> Search Keywords
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="google-keyword" 
+                                    name="keyword" 
+                                    class="form-input" 
+                                    placeholder="e.g., 'web development companies'" 
+                                    required
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="google-country">
+                                    <i class="fas fa-flag"></i> Target Country
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="google-country" 
+                                    name="country" 
+                                    class="form-input" 
+                                    placeholder="e.g., United States, UK, Canada, etc." 
+                                    value="United States"
+                                    required
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="google-limit">
+                                    <i class="fas fa-list-ol"></i> Number of Results
+                                </label>
+                                <select id="google-limit" name="result_limit" class="form-select">
+                                    <option value="5">5 Results (Fast)</option>
+                                    <option value="10" selected>10 Results (Balanced)</option>
+                                    <option value="20">20 Results (Comprehensive)</option>
+                                    <option value="30">30 Results (Extensive)</option>
+                                    <option value="50">50 Results (Maximum)</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="scrape-btn">
+                                <i class="fas fa-rocket"></i> Start Google Scraping
+                            </button>
+                        </form>
+
+                        <!-- Results Container -->
+                        <div class="results-container" id="results-container-google">
+                            <!-- Results will be populated here -->
+                        </div>
+
+                        <!-- Export Section -->
+                        <div class="export-section" id="export-section-google" style="display: none;">
+                            <h4><i class="fas fa-download"></i> Export Results</h4>
+                            <div class="export-buttons">
+                                <button class="export-btn csv-btn" onclick="exportResults('google', 'csv')">
+                                    <i class="fas fa-file-csv"></i> Export CSV
+                                </button>
+                                <button class="export-btn excel-btn" onclick="exportResults('google', 'excel')">
+                                    <i class="fas fa-file-excel"></i> Export Excel (.xls)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modals -->
+{% for scrape_type, title in scrape_types %}
+<div class="scraping-modal" id="scraping-modal-{{ scrape_type }}">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-cog fa-spin"></i>
+            </div>
+            <h3 class="modal-title">{{ title }} in Progress</h3>
+            <p class="modal-subtitle">Please wait while we extract emails for you...</p>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progress-bar-{{ scrape_type }}" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span class="status-text" id="status-text-{{ scrape_type }}">Initializing...</span>
+                <span id="progress-text-{{ scrape_type }}">0%</span>
+            </div>
+        </div>
+        
+        <button class="btn btn-secondary stop-scraping-btn" data-task-id="">
+            <i class="fas fa-stop"></i> Stop Scraping
+        </button>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Enhanced Progress Modals with Dynamic Types -->
+<div class="scraping-modal" id="scraping-modal-specific-url">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-link fa-spin"></i>
+            </div>
+            <h3 class="modal-title">URL Scraping in Progress</h3>
+            <p class="modal-subtitle">Extracting emails from the target website...</p>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progress-bar-specific-url" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span class="status-text" id="status-text-specific-url">Initializing...</span>
+                <span id="progress-text-specific-url">0%</span>
+            </div>
+        </div>
+        
+        <button class="btn btn-secondary stop-scraping-btn">
+            <i class="fas fa-stop"></i> Stop Scraping
+        </button>
+    </div>
+</div>
+
+<div class="scraping-modal" id="scraping-modal-multilevel">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-sitemap fa-spin"></i>
+            </div>
+            <h3 class="modal-title">Multi-Level Scraping in Progress</h3>
+            <p class="modal-subtitle">Deep crawling through multiple pages...</p>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progress-bar-multilevel" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span class="status-text" id="status-text-multilevel">Initializing...</span>
+                <span id="progress-text-multilevel">0%</span>
+            </div>
+        </div>
+        
+        <button class="btn btn-secondary stop-scraping-btn">
+            <i class="fas fa-stop"></i> Stop Scraping
+        </button>
+    </div>
+</div>
+
+<div class="scraping-modal" id="scraping-modal-google">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fab fa-google fa-spin"></i>
+            </div>
+            <h3 class="modal-title">Google Scraping in Progress</h3>
+            <p class="modal-subtitle">Searching and analyzing Google results...</p>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progress-bar-google" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span class="status-text" id="status-text-google">Initializing...</span>
+                <span id="progress-text-google">0%</span>
+            </div>
+        </div>
+        
+        <button class="btn btn-secondary stop-scraping-btn">
+            <i class="fas fa-stop"></i> Stop Scraping
+        </button>
+    </div>
+</div>
+
+<!-- Load JavaScript -->
+<script src="{% static 'js/realtime-scraper.js' %}?v={{ request.META.REQUEST_TIME|default:'1' }}"></script>
+
+<style>
+/* Additional page-specific styles */
+.scraping-dashboard {
+    background-attachment: fixed;
+}
+
+/* Ensure smooth animations */
+* {
+    box-sizing: border-box;
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #0f766e, #0d9488);
+}
+</style>
+{% endblock %}
