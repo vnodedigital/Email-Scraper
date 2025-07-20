@@ -168,12 +168,13 @@ def calculate_score(valid_smtp, catch_all, is_disposable_email, is_role_email, i
 
 
 # ---------- Main Verifier ----------
-SMTP_TIMEOUT = 15  # seconds
+SMTP_TIMEOUT = 10  # Reduced timeout for better performance
 SMTP_RETRIES = 2   # number of MX fallback attempts
+SMTP_PORTS = [25, 587, 2525]  # Common SMTP ports to try
 
 
 def smtp_check(email):
-    """Main email verification function"""
+    """Main email verification function with improved SMTP handling"""
     if not validate_syntax(email):
         return {"status": "invalid", "reason": "Invalid syntax", "score": 0.0}
 
@@ -189,49 +190,102 @@ def smtp_check(email):
         dmarc = get_dmarc_record(domain)
         dkim = get_dkim_record(domain)
 
-        # Try multiple MX hosts
+        # Try multiple MX hosts with port fallback
+        last_error = "Connection failed"
+        
         for attempt, mx_host in enumerate(mx_hosts[:SMTP_RETRIES + 1]):
-            try:
-                catch_all = is_catch_all(mx_host, domain)
-                valid_smtp, smtp_msg = smtp_validate(mx_host, email)
+            # Try different ports for each MX host
+            for port in SMTP_PORTS:
+                try:
+                    catch_all = is_catch_all_improved(mx_host, domain, port)
+                    valid_smtp, smtp_msg = smtp_validate_improved(mx_host, email, port)
 
-                is_disposable_email = is_disposable(domain)
-                is_free = is_free_provider(domain)
-                is_role_email = is_role_based(email)
-                is_blacklisted_email = is_blacklisted(domain)
+                    is_disposable_email = is_disposable(domain)
+                    is_free = is_free_provider(domain)
+                    is_role_email = is_role_based(email)
+                    is_blacklisted_email = is_blacklisted(domain)
 
-                score = calculate_score(valid_smtp, catch_all, is_disposable_email, is_role_email, is_blacklisted_email)
+                    # Calculate score with DNS record bonuses
+                    score = calculate_score(valid_smtp, catch_all, is_disposable_email, is_role_email, is_blacklisted_email)
+                    
+                    # Add DNS record bonuses
+                    if spf:
+                        score += 0.1
+                    if dkim:
+                        score += 0.1
+                    if dmarc:
+                        score += 0.1
+                    
+                    score = max(0.0, min(1.0, round(score, 2)))
 
-                if valid_smtp:
-                    status = "valid"
-                elif catch_all:
-                    status = "catch-all"
-                else:
-                    status = "invalid"
+                    if valid_smtp:
+                        status = "valid"
+                    elif catch_all:
+                        status = "catch-all"
+                    else:
+                        status = "invalid"
 
-                # If valid or catch-all, or last retry, return result
-                if valid_smtp or catch_all or attempt == SMTP_RETRIES or attempt == len(mx_hosts) - 1:
-                    return {
-                        "email": email,
-                        "status": status,
-                        "reason": smtp_msg if not valid_smtp else "SMTP accepted",
-                        "is_disposable": is_disposable_email,
-                        "is_free_provider": is_free,
-                        "is_role_based": is_role_email,
-                        "is_catch_all": catch_all,
-                        "is_blacklisted": is_blacklisted_email,
-                        "score": score,
-                        "spf": spf,
-                        "dmarc": dmarc,
-                        "dkim": dkim
-                    }
-            except Exception as e:
-                # If this is the last attempt, return error
-                if attempt == SMTP_RETRIES or attempt == len(mx_hosts) - 1:
-                    return {"status": "error", "reason": str(e), "score": 0.0}
+                    # If we got a valid connection (success or catch-all), return immediately
+                    if valid_smtp or catch_all:
+                        return {
+                            "email": email,
+                            "status": status,
+                            "reason": smtp_msg if not valid_smtp else "SMTP accepted",
+                            "is_disposable": is_disposable_email,
+                            "is_free_provider": is_free,
+                            "is_role_based": is_role_email,
+                            "is_catch_all": catch_all,
+                            "is_blacklisted": is_blacklisted_email,
+                            "score": score,
+                            "spf": spf,
+                            "dmarc": dmarc,
+                            "dkim": dkim,
+                            "mx_host": mx_host,
+                            "port": port
+                        }
+                    
+                    last_error = smtp_msg
+                    
+                except Exception as e:
+                    last_error = f"Port {port} failed: {str(e)}"
+                    continue
+            
+            # If we tried all ports for this MX host and failed, try next MX host
+            if attempt < len(mx_hosts) - 1 and attempt < SMTP_RETRIES:
                 continue
 
-    except Exception as e:
-        return {"status": "error", "reason": str(e), "score": 0.0}
+        # If we've tried all MX hosts and ports, return the result based on other checks
+        is_disposable_email = is_disposable(domain)
+        is_free = is_free_provider(domain)
+        is_role_email = is_role_based(email)
+        is_blacklisted_email = is_blacklisted(domain)
+        
+        score = calculate_score(False, False, is_disposable_email, is_role_email, is_blacklisted_email)
+        
+        # Add DNS record bonuses even if SMTP failed
+        if spf:
+            score += 0.1
+        if dkim:
+            score += 0.1
+        if dmarc:
+            score += 0.1
+        
+        score = max(0.0, min(1.0, round(score, 2)))
 
-    return {"status": "error", "reason": "Unknown error", "score": 0.0}
+        return {
+            "email": email,
+            "status": "invalid",
+            "reason": f"SMTP connection failed: {last_error}",
+            "is_disposable": is_disposable_email,
+            "is_free_provider": is_free,
+            "is_role_based": is_role_email,
+            "is_catch_all": False,
+            "is_blacklisted": is_blacklisted_email,
+            "score": score,
+            "spf": spf,
+            "dmarc": dmarc,
+            "dkim": dkim
+        }
+
+    except Exception as e:
+        return {"status": "error", "reason": f"General error: {str(e)}", "score": 0.0}

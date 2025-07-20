@@ -1,68 +1,431 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block head %}
-<title>Email Verifier</title>
+<title>Professional Email Verifier - Advanced Verification</title>
     <!-- Add cache-busting parameter and meta tags -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}?v={{ request.META.REQUEST_TIME|default:'1' }}">
+    <link rel="stylesheet" href="{% static 'css/realtime-scraper.css' %}?v={{ request.META.REQUEST_TIME|default:'1' }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="description" content="Advanced email verification with real-time validation and professional analytics">
     <style>
-        /* Ensure these styles have higher specificity */
-        .credits-high {
+        /* Verifier-specific styles that blend with scraper design */
+        .verifier-dashboard {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .verifier-dashboard::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(13, 148, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .verifier-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .verifier-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .verifier-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .verifier-header h1 i {
+            color: black !important;
+            background: none !important;
+            -webkit-text-fill-color: black !important;
+        }
+
+        .verifier-header h1 .title-text {
+            background: linear-gradient(135deg, #0d9488, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .verifier-header p {
+            font-size: 1.2rem;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Credits section styling */
+        .credits-section {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            margin-top: 1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+
+        .credits-display {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .credits-high { 
             background-color: #22c55e !important;
             color: white !important;
-            padding: 2px 8px !important;
-            border-radius: 4px !important;
+            padding: 4px 12px !important;
+            border-radius: 20px !important;
             font-weight: bold !important;
         }
-        .credits-medium {
+        .credits-medium { 
             background-color: #eab308 !important;
             color: white !important;
-            padding: 2px 8px !important;
-            border-radius: 4px !important;
+            padding: 4px 12px !important;
+            border-radius: 20px !important;
             font-weight: bold !important;
         }
-        .credits-low {
+        .credits-low { 
             background-color: #ef4444 !important;
             color: white !important;
-            padding: 2px 8px !important;
-            border-radius: 4px !important;
+            padding: 4px 12px !important;
+            border-radius: 20px !important;
             font-weight: bold !important;
         }
-        
-        /* Force refresh of cached styles */
+
+        /* Override main content styling */
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0d9488, #3b82f6, #8b5cf6);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .main-content:hover::before {
+            transform: translateX(0);
+        }
+
+        /* Tab styling */
+        .input-tabs {
+            display: flex;
+            background: rgba(13, 148, 136, 0.05);
+            border-radius: 16px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            background: rgba(13, 148, 136, 0.1);
+            color: #0d9488;
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: rgba(13, 148, 136, 0.15);
+            color: #0d9488;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.2);
+        }
+
+        /* Input panels */
+        .input-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .input-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        /* Button styling */
+        .btn-primary, .btn-secondary {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(13, 148, 136, 0.5);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a5568;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(13, 148, 136, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(13, 148, 136, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:hover::before {
+            left: 100%;
+        }
+
+        /* Form inputs */
+        .form-group input,
+        .form-group textarea {
+            border: 2px solid #cbd5e0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            padding: 12px 16px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+            background: white;
+        }
+
+        .form-group input:hover,
+        .form-group textarea:hover {
+            border-color: #a0aec0;
+        }
+
+        /* Export button styling */
+        .export-results-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .export-results-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .export-results-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .export-results-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Filter controls */
+        .filter-controls select,
+        .filter-controls input {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .filter-controls select:focus,
+        .filter-controls input:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+            background: white;
+        }
+
+        /* Particle canvas */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Override any conflicting styles */
         * {
-            -webkit-box-sizing: border-box;
-            -moz-box-sizing: border-box;
             box-sizing: border-box;
+        }
+
+        /* Override progress bar height from realtime-scraper.css */
+        .verifier-dashboard .progress-bar {
+            width: 100%;
+            height: 10px !important;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .verifier-dashboard .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d9488, #14b8a6);
+            width: 0%;
+            transition: width 0.3s ease;
         }
     </style>
 {% endblock %}
 
 {% block body %} 
+<div class="verifier-dashboard">
+    <!-- Particle Canvas for Background Animation -->
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="verifier-container">
+        <!-- Header Section -->
+        <header class="verifier-header">
+            <h1><i class="fas fa-envelope-open-text"></i> <span class="title-text">Professional Email Verifier</span></h1>
+            <p>Advanced email verification with real-time validation and comprehensive analytics</p>
 
-    {% csrf_token %}
-    <div class="email-verifier-container">
-        <header>
-            <h1><i class="fas fa-envelope-open-text"></i> vNode Email Verifyer</h1>
-            <p>Verify you mail with advance facility</p>
-
-           <div>
-            <span>Remaining credits: 
-                <span class="credits-display
-                    {% if user_profile.verify_credits >= 100 %}
-                        credits-high
-                    {% elif user_profile.verify_credits >= 10 %}
-                        credits-medium
-                    {% else %}
-                        credits-low
-                    {% endif %}
-                ">{{ user_profile.verify_credits }}</span>
-            </span>
-           </div>
-
+            <div class="credits-section">
+                <i class="fas fa-coins"></i>
+                <span style="color: black;">Verification Credits: 
+                    <span class="credits-display
+                        {% if user_profile.verify_credits >= 100 %}
+                            credits-high
+                        {% elif user_profile.verify_credits >= 10 %}
+                            credits-medium
+                        {% else %}
+                            credits-low
+                        {% endif %}
+                    ">{{ user_profile.verify_credits }}</span>
+                </span>
+            </div>
         </header>
 
         <div class="main-content">
@@ -72,9 +435,15 @@
                 
                 <!-- Single/Multiple Email Input -->
                 <div class="input-tabs">
-                    <button class="tab-btn active" id="singleTab">Single Email</button>
-                    <button class="tab-btn" id="multipleTab">Multiple Emails</button>
-                    <button class="tab-btn" id="fileTab">File Upload</button>
+                    <button class="tab-btn active" id="singleTab">
+                        <i class="fas fa-envelope"></i> Single Email
+                    </button>
+                    <button class="tab-btn" id="multipleTab">
+                        <i class="fas fa-list"></i> Multiple Emails
+                    </button>
+                    <button class="tab-btn" id="fileTab">
+                        <i class="fas fa-file-upload"></i> File Upload
+                    </button>
                 </div>
 
                 <!-- Single Email Input -->
@@ -293,8 +662,108 @@
           </div>
         </div>
     </div>
+    
+    {% csrf_token %}
+    
+    <!-- Load JavaScript -->
     <script src="{% static 'js/mailChecker.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Particle Animation Script -->
+    <script>
+        // Particle Animation System
+        function initParticleAnimation() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
 
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
 
+            const particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    radius: Math.random() * 3 + 1,
+                    opacity: Math.random() * 0.5 + 0.2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(13, 148, 136, ${particle.opacity})`;
+                    ctx.fill();
+                    
+                    // Draw connections between nearby particles
+                    particles.forEach(otherParticle => {
+                        const dx = particle.x - otherParticle.x;
+                        const dy = particle.y - otherParticle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(particle.x, particle.y);
+                            ctx.lineTo(otherParticle.x, otherParticle.y);
+                            ctx.strokeStyle = `rgba(13, 148, 136, ${0.1 * (100 - distance) / 100})`;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    });
+                });
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        // Enhanced Tab Functionality
+        function initTabSystem() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.input-panel');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all tabs and panels
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabPanels.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    btn.classList.add('active');
+                    
+                    // Show corresponding panel with animation
+                    const targetPanel = document.getElementById(btn.id.replace('Tab', 'Panel'));
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initParticleAnimation();
+            initTabSystem();
+        });
+    </script>
+</div>
 {% endblock body %}
