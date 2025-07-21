@@ -50,7 +50,7 @@ def is_catch_all(mx_host, domain):
     """Check if domain accepts catch-all emails"""
     try:
         random_email = ''.join(random.choices(string.ascii_lowercase, k=12)) + '@' + domain
-        with smtplib.SMTP(mx_host, timeout=10) as server:
+        with smtplib.SMTP(mx_host, timeout=5) as server:
             server.helo("yourdomain.com")
             server.mail("verify@yourdomain.com")
             code, _ = server.rcpt(random_email)
@@ -94,13 +94,62 @@ def validate_syntax(email):
 def smtp_validate(mx_host, email):
     """Validate email via SMTP"""
     try:
-        with smtplib.SMTP(mx_host, timeout=15) as server:
+        with smtplib.SMTP(mx_host, timeout=5) as server:
             server.helo("yourdomain.com")
             server.mail("verify@yourdomain.com")
             code, response = server.rcpt(email)
             return code in (250, 251), response.decode() if isinstance(response, bytes) else str(response)
     except Exception as e:
         return False, str(e)
+
+
+def smtp_validate_improved(mx_host, email, port=25):
+    """Improved SMTP validation with port support and better error handling"""
+    try:
+        with smtplib.SMTP(timeout=5) as server:
+            server.connect(mx_host, port)
+            server.helo("yourdomain.com")
+            server.mail("verify@yourdomain.com")
+            code, response = server.rcpt(email)
+            
+            # Handle response
+            response_text = response.decode() if isinstance(response, bytes) else str(response)
+            
+            if code == 250:
+                return True, "Email accepted"
+            elif code == 251:
+                return True, "User not local, will forward"
+            elif code in (450, 451, 452):
+                return False, f"Temporary failure: {response_text}"
+            elif code in (550, 551, 552, 553, 554):
+                return False, f"Permanent failure: {response_text}"
+            else:
+                return False, f"Unknown response {code}: {response_text}"
+                
+    except smtplib.SMTPConnectError as e:
+        return False, f"Connection failed: {str(e)}"
+    except smtplib.SMTPServerDisconnected as e:
+        return False, f"Server disconnected: {str(e)}"
+    except smtplib.SMTPRecipientsRefused as e:
+        return False, f"Recipients refused: {str(e)}"
+    except Exception as e:
+        return False, f"SMTP error: {str(e)}"
+
+
+def is_catch_all_improved(mx_host, domain, port=25):
+    """Improved catch-all detection with port support"""
+    try:
+        # Generate a random email that's very unlikely to exist
+        random_email = ''.join(random.choices(string.ascii_lowercase, k=15)) + '9999@' + domain
+        
+        with smtplib.SMTP(timeout=5) as server:
+            server.connect(mx_host, port)
+            server.helo("yourdomain.com")
+            server.mail("verify@yourdomain.com")
+            code, _ = server.rcpt(random_email)
+            return code in (250, 251)
+    except Exception:
+        return False
 
 
 # ---------- DNS Record Checks ----------
@@ -168,9 +217,9 @@ def calculate_score(valid_smtp, catch_all, is_disposable_email, is_role_email, i
 
 
 # ---------- Main Verifier ----------
-SMTP_TIMEOUT = 10  # Reduced timeout for better performance
-SMTP_RETRIES = 2   # number of MX fallback attempts
-SMTP_PORTS = [25, 587, 2525]  # Common SMTP ports to try
+SMTP_TIMEOUT = 5  # Reduced timeout for faster response (5 seconds per attempt)
+SMTP_RETRIES = 1   # reduced retry attempts for faster response
+SMTP_PORTS = [25, 587]  # Only try most common ports to reduce time
 
 
 def smtp_check(email):
@@ -193,12 +242,21 @@ def smtp_check(email):
         # Try multiple MX hosts with port fallback
         last_error = "Connection failed"
         
-        for attempt, mx_host in enumerate(mx_hosts[:SMTP_RETRIES + 1]):
+        # Limit MX hosts to try
+        mx_hosts_to_try = mx_hosts[:min(len(mx_hosts), SMTP_RETRIES + 1)]
+        
+        for mx_host in mx_hosts_to_try:
             # Try different ports for each MX host
             for port in SMTP_PORTS:
                 try:
-                    catch_all = is_catch_all_improved(mx_host, domain, port)
-                    valid_smtp, smtp_msg = smtp_validate_improved(mx_host, email, port)
+                    # Use fallback to simple function if improved ones fail
+                    try:
+                        catch_all = is_catch_all_improved(mx_host, domain, port)
+                        valid_smtp, smtp_msg = smtp_validate_improved(mx_host, email, port)
+                    except Exception as e:
+                        # Fallback to original functions
+                        catch_all = is_catch_all(mx_host, domain) if port == 25 else False
+                        valid_smtp, smtp_msg = smtp_validate(mx_host, email) if port == 25 else (False, f"Port {port} not supported in fallback")
 
                     is_disposable_email = is_disposable(domain)
                     is_free = is_free_provider(domain)
@@ -249,10 +307,6 @@ def smtp_check(email):
                 except Exception as e:
                     last_error = f"Port {port} failed: {str(e)}"
                     continue
-            
-            # If we tried all ports for this MX host and failed, try next MX host
-            if attempt < len(mx_hosts) - 1 and attempt < SMTP_RETRIES:
-                continue
 
         # If we've tried all MX hosts and ports, return the result based on other checks
         is_disposable_email = is_disposable(domain)
