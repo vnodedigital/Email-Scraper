@@ -1,6 +1,6 @@
 class CatchAllMailChecker {
     constructor() {
-        this.history = this.loadHistory();
+        this.history = []; // Will be loaded from database
         this.currentResults = [];
         this.isChecking = false;
         this.originalRows = []; // Store original file rows with extra columns
@@ -10,7 +10,8 @@ class CatchAllMailChecker {
     
     init() {
         this.setupEventListeners();
-        this.updateHistoryDisplay();
+        this.setupHistoryEventListeners(); // Set up event listeners for initial Django-rendered buttons
+        this.loadHistoryFromDatabase(); // Load from database instead of localStorage
         this.setupTabs();
         this.loadAndDisplayCredits(); // Load credits on initialization
     }
@@ -38,22 +39,72 @@ class CatchAllMailChecker {
         const checkBtn = document.getElementById('checkBtn');
         const clearBtn = document.getElementById('clearBtn');
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-        const exportHistoryBtn = document.getElementById('exportHistoryBtn');
+        const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
         const exportResultsBtn = document.getElementById('exportResultsBtn');
         const fileInput = document.getElementById('fileInput');
         const multipleEmails = document.getElementById('multipleEmails');
         const statusFilter = document.getElementById('statusFilter');
         const searchFilter = document.getElementById('searchFilter');
         
+        // Modal close buttons
+        const closeDetailsModal = document.getElementById('closeDetailsModal');
+        const closeExportFilterModal = document.getElementById('closeExportFilterModal');
+        const exportDetailsBtn = document.getElementById('exportDetailsBtn');
+        
         if (checkBtn) checkBtn.addEventListener('click', () => this.performBulkCheck());
         if (clearBtn) clearBtn.addEventListener('click', () => this.clearCurrentResults());
         if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', () => this.clearHistory());
-        if (exportHistoryBtn) exportHistoryBtn.addEventListener('click', () => this.exportHistory());
+        if (refreshHistoryBtn) refreshHistoryBtn.addEventListener('click', () => this.loadHistoryFromDatabase());
         if (exportResultsBtn) exportResultsBtn.addEventListener('click', () => this.exportResults());
         if (fileInput) fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
         if (multipleEmails) multipleEmails.addEventListener('input', () => this.updateEmailCount());
         if (statusFilter) statusFilter.addEventListener('change', () => this.filterResults());
         if (searchFilter) searchFilter.addEventListener('input', () => this.filterResults());
+
+        // Modal event listeners
+        if (closeDetailsModal) {
+            closeDetailsModal.addEventListener('click', () => {
+                document.getElementById('detailsModal').style.display = 'none';
+            });
+        }
+        
+        if (closeExportFilterModal) {
+            closeExportFilterModal.addEventListener('click', () => {
+                document.getElementById('exportFilterModal').style.display = 'none';
+            });
+        }
+
+        if (exportDetailsBtn) {
+            exportDetailsBtn.addEventListener('click', () => {
+                const historyId = exportDetailsBtn.dataset.historyId;
+                if (historyId) {
+                    this.showHistoryExportModal(historyId);
+                }
+            });
+        }
+
+        // Setup export filter modal buttons
+        this.setupExportFilterModal();
+        
+        // Modal outside click handlers
+        const detailsModal = document.getElementById('detailsModal');
+        const exportFilterModal = document.getElementById('exportFilterModal');
+        
+        if (detailsModal) {
+            detailsModal.addEventListener('click', (e) => {
+                if (e.target === detailsModal) {
+                    detailsModal.style.display = 'none';
+                }
+            });
+        }
+
+        if (exportFilterModal) {
+            exportFilterModal.addEventListener('click', (e) => {
+                if (e.target === exportFilterModal) {
+                    exportFilterModal.style.display = 'none';
+                }
+            });
+        }
         
         // Enter key support for single email
         const singleEmail = document.getElementById('singleEmail');
@@ -71,7 +122,7 @@ class CatchAllMailChecker {
                 if (btn) {
                     const idx = btn.getAttribute('data-row-idx');
                     if (idx !== null && this.currentResults[idx]) {
-                        this.showDetailsModal(this.currentResults[idx]);
+                        this.showEmailDetailsModal(this.currentResults[idx]);
                     }
                 }
             });
@@ -307,6 +358,25 @@ class CatchAllMailChecker {
             }
         }
         
+        // Generate a title for this verification batch
+        const activeTab = document.querySelector('.tab-btn.active');
+        let title = 'Email Verification';
+        if (activeTab) {
+            switch (activeTab.id) {
+                case 'singleTab':
+                    title = `Single Email - ${emails[0]}`;
+                    break;
+                case 'multipleTab':
+                    title = `Multiple Emails - ${emails.length} emails`;
+                    break;
+                case 'fileTab':
+                    const fileInput = document.getElementById('fileInput');
+                    const fileName = fileInput?.files[0]?.name || 'Upload';
+                    title = `File Upload - ${fileName}`;
+                    break;
+            }
+        }
+        
         this.isChecking = true;
         this.showLoading(true);
         this.showResults(true);
@@ -314,158 +384,76 @@ class CatchAllMailChecker {
         this.currentResults = [];
         
         const totalEmails = emails.length;
-        let processedEmails = 0;
-        let currentCredits = initialCredits.verify_credits;
-        
         this.updateProgress(0, totalEmails);
         
         try {
-            for (let i = 0; i < emails.length; i++) {
-                const email = emails[i];
+            // Use the new batch verification API
+            console.log('Calling batch verify API with emails:', emails);
+            const response = await fetch('/verifier/api/batch-verify/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify({
+                    emails: emails,
+                    title: title
+                })
+            });
+
+            console.log('API Response status:', response.status);
+            const data = await response.json();
+            console.log('API Response data:', data);
+
+            if (response.ok && data.success) {
+                // Display results
+                this.currentResults = data.results;
+                this.updateProgress(totalEmails, totalEmails);
+                this.updateResultsDisplay();
                 
-                // Check credits before each verification
-                if (currentCredits <= 0) {
-                    this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
-                    break;
+                // Update credits display
+                if (data.remaining_credits !== undefined) {
+                    this.displayCredits(data.remaining_credits);
+                }
+
+                // Show success message
+                const summary = data.summary;
+                const successMessage = `✅ Verification Complete!\n\n` +
+                    `📧 Total: ${summary.total}\n` +
+                    `✅ Valid: ${summary.valid}\n` +
+                    `⚠️ Catch-All: ${summary.catchall}\n` +
+                    `❌ Invalid: ${summary.invalid}\n` +
+                    `🎯 Success Rate: ${summary.success_rate}%\n\n` +
+                    `💳 Credits Used: ${data.summary.total}\n` +
+                    `💰 Remaining Credits: ${data.remaining_credits}`;
+                
+                this.showCreditAlert(successMessage, 'info');
+
+                // Refresh history display
+                this.loadHistoryFromDatabase();
+
+            } else {
+                // Handle errors
+                let errorMessage = data.error || 'Verification failed';
+                if (data.current_credits !== undefined) {
+                    errorMessage += `\nCurrent Credits: ${data.current_credits}`;
                 }
                 
-                try {
-                    const result = await this.checkWithBackend(email);
-                    
-                    // Update current credits from response
-                    if (result.remaining_credits !== undefined) {
-                        currentCredits = result.remaining_credits;
-                        this.displayCredits(currentCredits);
-                        
-                        // Show low credit warning
-                        if (currentCredits <= 10 && currentCredits > 0) {
-                            // Only show warning once per session
-                            if (!this.lowCreditWarningShown) {
-                                this.showCreditAlert(`Low credit warning: You have ${currentCredits} credits remaining. Consider purchasing more credits to continue verification.`, 'warning');
-                                this.lowCreditWarningShown = true;
-                            }
-                        }
-                    }
-                    
-                    // Attach original row if available
-                    if (this.originalRows && this.originalRows.length) {
-                        const orig = this.originalRows.find(r => r.__email === email);
-                        if (orig) result._original = orig;
-                    }
-                    
-                    this.currentResults.push(result);
-                    processedEmails++;
-                    
-                    this.updateProgress(processedEmails, totalEmails);
-                    this.updateResultsDisplay();
-                    
-                    // Check if credits are exhausted
-                    if (currentCredits <= 0) {
-                        this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
-                        break;
-                    }
-                    
-                } catch (error) {
-                    if (error.message.includes('INSUFFICIENT_CREDITS')) {
-                        this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
-                        break;
-                    }
-                    
-                    // For other errors, add error result and continue
-                    this.currentResults.push({
-                        email: email,
-                        status: 'error',
-                        reason: error.message,
-                        score: 0.0
-                    });
-                    processedEmails++;
-                    this.updateProgress(processedEmails, totalEmails);
-                    this.updateResultsDisplay();
+                this.showCreditAlert(errorMessage, 'error');
+                
+                // Update credits if available
+                if (data.current_credits !== undefined) {
+                    this.displayCredits(data.current_credits);
                 }
             }
             
-            const checkResult = {
-                timestamp: new Date().toISOString(),
-                totalEmails: processedEmails,
-                results: this.currentResults,
-                summary: this.calculateSummary(this.currentResults)
-            };
-            
-            this.addToHistory(checkResult);
-            
-            // Show success message
-            if (processedEmails > 0) {
-                this.showSuccessMessage(processedEmails, currentCredits);
-            }
         } catch (error) {
-            console.error('Bulk check failed:', error);
-            alert('An error occurred during the check. Please try again.');
+            console.error('Bulk verification error:', error);
+            this.showCreditAlert('Network error during verification. Please try again.', 'error');
         } finally {
             this.isChecking = false;
             this.showLoading(false);
             this.showProgress(false);
-            const clearBtn = document.getElementById('clearBtn');
-            if (clearBtn) clearBtn.style.display = 'inline-flex';
-        }
-    }
-    
-    async checkSingleEmail(email) {
-        // No longer used, all logic moved to backend
-        return await this.checkWithBackend(email);
-    }
-    
-    // Updated to use Django REST API with credit checking
-    async checkWithBackend(email, retries = 2) {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                // Get CSRF token from hidden input or cookie
-                let csrfToken = '';
-                const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-                if (csrfInput) {
-                    csrfToken = csrfInput.value;
-                } else {
-                    // Fallback to cookie
-                    const cookies = document.cookie.split(';');
-                    for (let cookie of cookies) {
-                        const [name, value] = cookie.trim().split('=');
-                        if (name === 'csrftoken') {
-                            csrfToken = value;
-                            break;
-                        }
-                    }
-                }
-                
-                const response = await fetch('/verifier/api/check-email/', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({ email })
-                });
-                
-                if (!response.ok) {
-                    if (response.status === 402) {
-                        // Payment required - insufficient credits
-                        const errorData = await response.json();
-                        throw new Error(`INSUFFICIENT_CREDITS: ${errorData.message || 'Insufficient verify credits'}`);
-                    }
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-                
-                const data = await response.json();
-                return data;
-            } catch (e) {
-                if (e.message.includes('INSUFFICIENT_CREDITS')) {
-                    // Don't retry on insufficient credits
-                    throw e;
-                }
-                if (attempt === retries) {
-                    return { email, status: 'error', reason: e.message };
-                }
-                await new Promise(res => setTimeout(res, 500 * (attempt + 1)));
-            }
         }
     }
     
@@ -702,13 +690,38 @@ class CatchAllMailChecker {
     }
     
     addToHistory(checkResult) {
-        this.history.unshift(checkResult);
-        if (this.history.length > 50) {
-            this.history = this.history.slice(0, 50); // Keep only last 50 checks
-        }
+        // No longer needed since we're using database
+        // this.history.unshift(checkResult);
+        // if (this.history.length > 50) {
+        //     this.history = this.history.slice(0, 50); // Keep only last 50 checks
+        // }
+        // 
+        // this.saveHistory();
+        // this.updateHistoryDisplay();
         
-        this.saveHistory();
-        this.updateHistoryDisplay();
+        // Refresh history from database
+        this.loadHistoryFromDatabase();
+    }
+
+    async loadHistoryFromDatabase() {
+        try {
+            const response = await fetch('/verifier/history/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.history = data.history || [];
+                this.updateHistoryDisplay();
+            }
+        } catch (error) {
+            console.error('Failed to load history from database:', error);
+        }
     }
     
     updateHistoryDisplay() {
@@ -721,57 +734,330 @@ class CatchAllMailChecker {
         }
         
         const html = this.history.map(item => {
-            const date = new Date(item.timestamp).toLocaleString();
-            const summary = item.summary;
-            
             return `
-                <div class="history-item">
-                    <div class="history-item-header">
-                        <span class="history-domain">${summary.total} emails checked</span>
-                        <span class="history-timestamp">${date}</span>
+                <div class="history-item" data-history-id="${item.id}">
+                    <div class="history-header">
+                        <div class="history-title">
+                            <i class="fas fa-envelope-open"></i>
+                            <span class="title">${item.title}</span>
+                            <span class="email-count">${item.email_count} emails</span>
+                        </div>
+                        <div class="history-date">${item.formatted_date}</div>
                     </div>
-                    <div class="history-summary">
-                        <span class="history-tag tag-success">Valid: ${summary.valid}</span>
-                        <span class="history-tag tag-warning">Catch-all: ${summary.catchAll}</span>
-                        <span class="history-tag tag-error">Invalid: ${summary.invalid}</span>
+                    <div class="history-stats">
+                        <div class="stat-badge success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${item.valid_count} Valid</span>
+                        </div>
+                        <div class="stat-badge warning">
+                            <i class="fas fa-inbox"></i>
+                            <span>${item.catchall_count} Catch-All</span>
+                        </div>
+                        <div class="stat-badge error">
+                            <i class="fas fa-times-circle"></i>
+                            <span>${item.invalid_count} Invalid</span>
+                        </div>
+                        <div class="success-rate">
+                            Success Rate: ${item.success_rate}%
+                        </div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn-details" data-history-id="${item.id}">
+                            <i class="fas fa-eye"></i> Details
+                        </button>
+                        <button class="btn-export" data-history-id="${item.id}">
+                            <i class="fas fa-download"></i> Export
+                        </button>
                     </div>
                 </div>
             `;
         }).join('');
         
         historyList.innerHTML = html;
+        
+        // Add event listeners for the new buttons
+        this.setupHistoryEventListeners();
+    }
+
+    setupHistoryEventListeners() {
+        // Details buttons
+        document.querySelectorAll('.btn-details').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const historyId = e.target.closest('.btn-details').dataset.historyId;
+                this.showHistoryDetails(historyId);
+            });
+        });
+
+        // Export buttons
+        document.querySelectorAll('.btn-export').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const historyId = e.target.closest('.btn-export').dataset.historyId;
+                this.showHistoryExportModal(historyId);
+            });
+        });
+    }
+
+    async showHistoryDetails(historyId) {
+        try {
+            // Get CSRF token more robustly
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                             document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+                             '';
+            
+            console.log('Fetching history details for ID:', historyId);
+            console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+            
+            const response = await fetch(`/verifier/history/${historyId}/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('History data received:', data);
+                const history = data.history;
+                
+                // Show the details modal
+                this.showDetailsModal(history);
+            } else {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                alert('Failed to load history details: ' + response.status);
+            }
+        } catch (error) {
+            console.error('Failed to load history details:', error);
+            alert('Failed to load history details: ' + error.message);
+        }
+    }
+
+    showDetailsModal(historyData) {
+        const modal = document.getElementById('detailsModal');
+        const title = document.getElementById('detailsTitle');
+        const subtitle = document.getElementById('detailsSubtitle');
+        const summary = document.getElementById('detailsSummary');
+        const tableBody = document.getElementById('detailsTableBody');
+        const exportBtn = document.getElementById('exportDetailsBtn');
+
+        console.log('Modal elements check:', {
+            modal: !!modal,
+            title: !!title,
+            subtitle: !!subtitle,
+            summary: !!summary,
+            tableBody: !!tableBody,
+            exportBtn: !!exportBtn
+        });
+
+        if (!modal) {
+            console.error('Details modal not found');
+            return;
+        }
+
+        // Set modal content with null checks
+        if (title) {
+            title.textContent = historyData.title;
+        }
+        if (subtitle) {
+            subtitle.textContent = `${historyData.email_count} emails verified on ${historyData.formatted_date}`;
+        }
+
+        // Set export button data
+        if (exportBtn) {
+            exportBtn.dataset.historyId = historyData.id;
+        }
+
+        // Create summary stats
+        if (summary) {
+            summary.innerHTML = `
+                <div class="detail-stat">
+                    <div class="detail-stat-number">${historyData.email_count}</div>
+                    <div class="detail-stat-label">Total Emails</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #16a34a;">${historyData.valid_count}</div>
+                    <div class="detail-stat-label">Valid</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #d97706;">${historyData.catchall_count}</div>
+                    <div class="detail-stat-label">Catch-All</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #dc2626;">${historyData.invalid_count}</div>
+                    <div class="detail-stat-label">Invalid</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #0d9488;">${historyData.success_rate}%</div>
+                    <div class="detail-stat-label">Success Rate</div>
+                </div>
+            `;
+        }
+
+        // Populate table with results
+        const results = historyData.verified_emails?.results || [];
+        this.populateDetailsTable(results);
+
+        // Show modal
+        modal.style.display = 'block';
+    }
+
+    populateDetailsTable(results) {
+        const tableBody = document.getElementById('detailsTableBody');
+        if (!tableBody) return;
+
+        const html = results.map(result => {
+            const score = result.score ? Math.round(result.score * 100) : 0;
+            const riskLevel = this.getRiskLevelFromScore(score);
+            const riskClass = score >= 70 ? 'safe' : score >= 41 ? 'medium' : 'high';
+
+            // Extract domain from email if not available
+            const domain = result.domain || (result.email ? result.email.split('@')[1] : '-');
+            
+            // Determine domain type
+            const domainType = result.is_free_provider ? 'Free' : 
+                              result.is_disposable ? 'Disposable' : 'Business';
+
+            return `
+                <tr>
+                    <td>${result.email || '-'}</td>
+                    <td>${domain}</td>
+                    <td>${domainType}</td>
+                    <td>${result.is_blacklisted ? 'Yes' : 'No'}</td>
+                    <td>${(result.status || 'invalid').replace(/^./, str => str.toUpperCase())}</td>
+                    <td>${result.is_catch_all ? 'Yes' : 'No'}</td>
+                    <td>${score}</td>
+                    <td class="risk-${riskClass}">${riskLevel}</td>
+                </tr>
+            `;
+        }).join('');
+
+        tableBody.innerHTML = html;
+
+        // Setup filtering for the details table
+        this.setupDetailsTableFiltering(results);
+    }
+
+    getRiskLevelFromScore(score) {
+        if (score >= 70) return 'Safe';
+        if (score >= 41) return 'Medium Risk';
+        return 'High Risk';
+    }
+
+    setupDetailsTableFiltering(allResults) {
+        const statusFilter = document.getElementById('detailsStatusFilter');
+        const searchFilter = document.getElementById('detailsSearchFilter');
+
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => this.filterDetailsTable(allResults));
+        }
+        if (searchFilter) {
+            searchFilter.addEventListener('input', () => this.filterDetailsTable(allResults));
+        }
+    }
+
+    filterDetailsTable(allResults) {
+        const statusFilter = document.getElementById('detailsStatusFilter').value;
+        const searchText = document.getElementById('detailsSearchFilter').value.toLowerCase();
+        
+        let filteredResults = allResults.filter(result => {
+            // Status filter - fix field mapping
+            let statusMatch = true;
+            if (statusFilter !== 'all') {
+                const status = result.status || 'invalid';
+                const isCatchAll = result.is_catch_all || false;
+                
+                if (statusFilter === 'valid' && (status !== 'valid' || isCatchAll)) statusMatch = false;
+                if (statusFilter === 'catch-all' && !isCatchAll) statusMatch = false;
+                if (statusFilter === 'invalid' && status !== 'invalid') statusMatch = false;
+            }
+
+            // Search filter
+            let searchMatch = true;
+            if (searchText) {
+                const email = (result.email || '').toLowerCase();
+                const domain = (result.domain || (result.email ? result.email.split('@')[1] : '')).toLowerCase();
+                searchMatch = email.includes(searchText) || domain.includes(searchText);
+            }
+
+            return statusMatch && searchMatch;
+        });
+
+        this.populateDetailsTableWithFiltered(filteredResults);
+    }
+
+    populateDetailsTableWithFiltered(results) {
+        const tableBody = document.getElementById('detailsTableBody');
+        if (!tableBody) return;
+
+        const html = results.map(result => {
+            const score = result.score ? Math.round(result.score * 100) : 0;
+            const riskLevel = this.getRiskLevelFromScore(score);
+            const riskClass = score >= 70 ? 'safe' : score >= 41 ? 'medium' : 'high';
+
+            return `
+                <tr>
+                    <td>${result.email || '-'}</td>
+                    <td>${result.domain || (result.email ? result.email.split('@')[1] : '-')}</td>
+                    <td>${result.domain_type || '-'}</td>
+                    <td>${result.is_blacklisted ? 'Yes' : 'No'}</td>
+                    <td>${result.status || 'Invalid'}</td>
+                    <td>${result.is_catch_all ? 'Yes' : 'No'}</td>
+                    <td>${score}</td>
+                    <td class="risk-${riskClass}">${riskLevel}</td>
+                </tr>
+            `;
+        }).join('');
+
+        tableBody.innerHTML = html;
+    }
+
+    showHistoryExportModal(historyId) {
+        const modal = document.getElementById('exportFilterModal');
+        if (modal) {
+            // Store the history ID for export
+            modal.dataset.historyId = historyId;
+            modal.style.display = 'flex';
+        }
     }
     
     clearHistory() {
-        if (confirm('Are you sure you want to clear all check history?')) {
-            this.history = [];
-            this.saveHistory();
-            this.updateHistoryDisplay();
+        if (confirm('Are you sure you want to clear all check history? This action cannot be undone.')) {
+            this.clearAllHistoryFromDatabase();
+        }
+    }
+
+    async clearAllHistoryFromDatabase() {
+        try {
+            const response = await fetch('/verifier/history/clear-all/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.message);
+                this.loadHistoryFromDatabase(); // Refresh the display
+            } else {
+                alert('Failed to clear history');
+            }
+        } catch (error) {
+            console.error('Failed to clear history:', error);
+            alert('Failed to clear history');
         }
     }
     
     exportHistory() {
-        if (this.history.length === 0) {
-            alert('No history to export');
-            return;
-        }
-        
-        const exportData = {
-            exportDate: new Date().toISOString(),
-            totalChecks: this.history.length,
-            checks: this.history
-        };
-        
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `email-verification-history-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // This method is no longer needed as we have individual export per history item
+        alert('Please use the Export button on individual history items to export specific verification results.');
     }
     
     loadHistory() {
@@ -791,8 +1077,73 @@ class CatchAllMailChecker {
             console.error('Failed to save history:', error);
         }
     }
+
+    setupExportFilterModal() {
+        const exportAsCSV = document.getElementById('exportAsCSV');
+        const exportAsExcel = document.getElementById('exportAsExcel');
+
+        if (exportAsCSV) {
+            exportAsCSV.addEventListener('click', () => {
+                this.performHistoryExport('csv');
+            });
+        }
+
+        if (exportAsExcel) {
+            exportAsExcel.addEventListener('click', () => {
+                this.performHistoryExport('excel');
+            });
+        }
+    }
+
+    async performHistoryExport(format) {
+        const modal = document.getElementById('exportFilterModal');
+        const historyId = modal?.dataset.historyId;
+
+        if (!historyId) {
+            alert('No history selected for export');
+            return;
+        }
+
+        // Get filter values
+        const form = document.getElementById('exportFilterForm');
+        const formData = new FormData(form);
+        const filters = {
+            valid: formData.has('valid'),
+            catchall: formData.has('catchall'),
+            invalid: formData.has('invalid'),
+            safe: formData.has('safe'),
+            medium: formData.has('medium'),
+            risk: formData.has('risk')
+        };
+
+        // Build query string
+        const params = new URLSearchParams({
+            format: format,
+            ...filters
+        });
+
+        try {
+            // Create download link
+            const url = `/verifier/history/${historyId}/export/?${params.toString()}`;
+            
+            // Create temporary link and click it
+            const a = document.createElement('a');
+            a.href = url;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Close modal
+            modal.style.display = 'none';
+
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Export failed. Please try again.');
+        }
+    }
     
-    showDetailsModal(result) {
+    showEmailDetailsModal(result) {
         const detailsHtml = `
             <h3 style="margin-top:0">Details for: <span style="word-break:break-all">${result.email || '-'}</span></h3>
             <table style="width:100%;border-collapse:collapse;font-size:1em;">

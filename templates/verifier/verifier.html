@@ -398,6 +398,355 @@
             width: 0%;
             transition: width 0.3s ease;
         }
+
+        /* History Section Styles */
+        .history-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 2rem;
+        }
+
+        .history-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .clear-history-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .clear-history-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .history-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0d9488, #3b82f6);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: rgba(13, 148, 136, 0.3);
+        }
+
+        .history-item:hover::before {
+            transform: translateX(0);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .history-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .history-title i {
+            color: #0d9488;
+            font-size: 1.2rem;
+        }
+
+        .history-title .title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .history-title .email-count {
+            background: rgba(13, 148, 136, 0.1);
+            color: #0d9488;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .history-date {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .history-stats {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stat-badge.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .stat-badge.warning {
+            background: rgba(251, 191, 36, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .stat-badge.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .success-rate {
+            color: #4b5563;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-details,
+        .btn-export {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-details {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-details:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .no-history {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            padding: 2rem;
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 12px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        /* Details Modal Styles */
+        .details-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .details-modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .details-modal-header {
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+
+        .details-modal-header h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .details-modal-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .details-modal-body {
+            padding: 2rem;
+        }
+
+        .details-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-stat {
+            background: rgba(248, 250, 252, 0.8);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .detail-stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .history-header,
+            .history-stats {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .history-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .btn-details,
+            .btn-export {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .success-rate {
+                margin-left: 0;
+            }
+
+            .details-modal-content {
+                margin: 5% auto;
+                width: 98%;
+            }
+
+            .details-modal-header,
+            .details-modal-body {
+                padding: 1.5rem;
+            }
+        }
     </style>
 {% endblock %}
 
@@ -611,12 +960,52 @@
                     <button id="clearHistoryBtn" class="clear-history-btn">
                         <i class="fas fa-trash"></i> Clear History
                     </button>
-                    <button id="exportHistoryBtn" class="export-results-btn">
-                        <i class="fas fa-download"></i> Export Results
+                    <button id="refreshHistoryBtn" class="btn-secondary">
+                        <i class="fas fa-sync"></i> Refresh
                     </button>
                 </div>
                 <div class="history-list" id="historyList">
-                    <p class="no-history">No checks performed yet</p>
+                    {% if history_list %}
+                        {% for history in history_list %}
+                        <div class="history-item" data-history-id="{{ history.id }}">
+                            <div class="history-header">
+                                <div class="history-title">
+                                    <i class="fas fa-envelope-open"></i>
+                                    <span class="title">{{ history.title }}</span>
+                                    <span class="email-count">{{ history.email_count }} emails</span>
+                                </div>
+                                <div class="history-date">{{ history.formatted_date }}</div>
+                            </div>
+                            <div class="history-stats">
+                                <div class="stat-badge success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>{{ history.valid_count }} Valid</span>
+                                </div>
+                                <div class="stat-badge warning">
+                                    <i class="fas fa-inbox"></i>
+                                    <span>{{ history.catchall_count }} Catch-All</span>
+                                </div>
+                                <div class="stat-badge error">
+                                    <i class="fas fa-times-circle"></i>
+                                    <span>{{ history.invalid_count }} Invalid</span>
+                                </div>
+                                <div class="success-rate">
+                                    Success Rate: {{ history.success_rate }}%
+                                </div>
+                            </div>
+                            <div class="history-actions">
+                                <button class="btn-details" data-history-id="{{ history.id }}">
+                                    <i class="fas fa-eye"></i> Details
+                                </button>
+                                <button class="btn-export" data-history-id="{{ history.id }}">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-history">No checks performed yet</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -630,7 +1019,7 @@
         </div>
 
         <!-- Export Filter Modal -->
-        <div id="exportFilterModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);z-index:10000;align-items:center;justify-content:center;">
+        <div id="exportFilterModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);z-index:999;align-items:center;justify-content:center;">
           <div style="background:#fff;padding:32px 36px 28px 36px;border-radius:16px;max-width:420px;width:95vw;box-shadow:0 8px 32px #0003, 0 1.5px 6px #0001;position:relative;">
             <button id="closeExportFilterModal" style="position:absolute;top:14px;right:18px;font-size:1.5em;background:none;border:none;cursor:pointer;color:#888;transition:color 0.2s;" onmouseover="this.style.color='#e53e3e'" onmouseout="this.style.color='#888'">&times;</button>
             <h2 style="margin:0 0 18px 0;font-size:1.35em;font-weight:600;color:#222;letter-spacing:0.5px; text-align: center;">Export Filter</h2>
@@ -661,12 +1050,66 @@
             </form>
           </div>
         </div>
+
+        <!-- Details Modal -->
+        <div id="detailsModal" class="details-modal" style="z-index: 900;">
+            <div class="details-modal-content">
+                <div class="details-modal-header">
+                    <h2><i class="fas fa-chart-line"></i> <span id="detailsTitle">Verification Details</span></h2>
+                    <p id="detailsSubtitle">Loading...</p>
+                    <button class="close-modal" id="closeDetailsModal">&times;</button>
+                </div>
+                <div class="details-modal-body">
+                    <div class="details-summary" id="detailsSummary">
+                        <!-- Summary stats will be inserted here -->
+                    </div>
+                    
+                    <!-- Results Table (reuse the existing one) -->
+                    <div class="results-table-container">
+                        <div class="table-controls">
+                            <div class="filter-controls">
+                                <select id="detailsStatusFilter">
+                                    <option value="all">All Results</option>
+                                    <option value="valid">Valid Only</option>
+                                    <option value="catch-all">Catch-All Only</option>
+                                    <option value="invalid">Invalid Only</option>
+                                </select>
+                                <input type="text" id="detailsSearchFilter" placeholder="Search emails..." />
+                            </div>
+                            <div class="export-controls">
+                                <button id="exportDetailsBtn" class="export-results-btn" data-history-id="">
+                                    <i class="fas fa-download"></i> Export Results
+                                </button>
+                            </div>
+                        </div>
+                        <div class="results-table-wrapper">
+                            <table class="results-table" id="detailsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Domain</th>
+                                        <th>Domain Type</th>
+                                        <th>Blacklist</th>
+                                        <th>SMTP</th>
+                                        <th>Catch-All</th>
+                                        <th>Score</th>
+                                        <th>Risk</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     {% csrf_token %}
     
     <!-- Load JavaScript -->
-    <script src="{% static 'js/mailChecker.js' %}"></script>
+    <script src="{% static 'js/mailChecker.js' %}?v=1753160500"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <!-- Particle Animation Script -->
