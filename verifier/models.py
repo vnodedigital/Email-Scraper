@@ -38,10 +38,11 @@ class EmailVerificationHistory(models.Model):
 
     @property
     def success_rate(self):
-        """Calculate success rate as percentage"""
+        """Calculate success rate as percentage (valid + catchall emails)"""
         if self.email_count == 0:
             return 0
-        return round((self.valid_count / self.email_count) * 100, 2)
+        successful_count = self.valid_count + self.catchall_count
+        return round((successful_count / self.email_count) * 100, 2)
 
     @property
     def formatted_date(self):

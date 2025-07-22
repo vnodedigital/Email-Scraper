@@ -249,21 +249,37 @@ def batch_verify_emails(request):
                 result = smtp_check(email.strip())
                 results.append(result)
                 
-                # Count results
-                if result.get('deliverable'):
-                    if result.get('catch_all'):
-                        catchall_count += 1
-                    else:
-                        valid_count += 1
+                # Count results based on catch-all priority logic with detailed debugging
+                is_catch_all = result.get('is_catch_all', False)
+                status = result.get('status', 'invalid').lower()
+                
+                # Debug: Log every email verification result
+                print(f"[CATCH-ALL DEBUG] Email: {email.strip()}")
+                print(f"[CATCH-ALL DEBUG] Status: '{status}'")
+                print(f"[CATCH-ALL DEBUG] is_catch_all: {is_catch_all}")
+                print(f"[CATCH-ALL DEBUG] All result fields: {list(result.keys())}")
+                
+                # Apply priority: Catch-all > Valid > Invalid
+                if is_catch_all or status == 'catch-all':
+                    catchall_count += 1
+                    print(f"[CATCH-ALL DEBUG] ✅ Counted as CATCH-ALL. Total catch-all: {catchall_count}")
+                elif status == 'valid':
+                    valid_count += 1
+                    print(f"[CATCH-ALL DEBUG] Counted as VALID. Total valid: {valid_count}")
                 else:
                     invalid_count += 1
+                    print(f"[CATCH-ALL DEBUG] Counted as INVALID. Total invalid: {invalid_count}")
+                
+                print(f"[CATCH-ALL DEBUG] Current counts: Valid={valid_count}, Invalid={invalid_count}, Catch-all={catchall_count}")
+                print(f"[CATCH-ALL DEBUG] ---")
                     
             except Exception as e:
                 # If verification fails, still add to results
                 result = {
                     'email': email.strip(),
-                    'deliverable': False,
-                    'catch_all': False,
+                    'status': 'invalid',
+                    'reason': str(e),
+                    'is_catch_all': False,
                     'domain': email.split('@')[1] if '@' in email else '',
                     'error': str(e),
                     'score': 0
@@ -275,9 +291,14 @@ def batch_verify_emails(request):
         credits_used = len(emails)
         user_profile.verify_credits -= credits_used
         user_profile.save()
-        
+
         # Save to history
         print(f"[DEBUG] Saving to database: {len(emails)} emails processed")
+        print(f"[CATCH-ALL DEBUG] FINAL COUNTS BEFORE SAVING:")
+        print(f"[CATCH-ALL DEBUG] Valid: {valid_count}")
+        print(f"[CATCH-ALL DEBUG] Invalid: {invalid_count}")
+        print(f"[CATCH-ALL DEBUG] Catch-all: {catchall_count}")
+        print(f"[CATCH-ALL DEBUG] Total processed: {len(results)}")
         history_record = EmailVerificationHistory.objects.create(
             user=request.user,
             title=title,

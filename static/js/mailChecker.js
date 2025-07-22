@@ -580,9 +580,18 @@ class CatchAllMailChecker {
     calculateSummary(results) {
         let valid = 0, invalid = 0, catchAll = 0;
         results.forEach(r => {
-            if (r.is_catch_all) catchAll++;
-            else if (r.status === 'valid') valid++;
-            else invalid++;
+            // Priority: Catch-all detection takes precedence over status
+            const isCatchAll = r.is_catch_all || false;
+            const status = (r.status || 'invalid').toLowerCase();
+            
+            // Apply same priority logic as backend: Catch-all > Valid > Invalid
+            if (isCatchAll || status === 'catch-all') {
+                catchAll++;
+            } else if (status === 'valid') {
+                valid++;
+            } else {
+                invalid++;
+            }
         });
         return { total: results.length, valid, catchAll, invalid };
     }
@@ -625,11 +634,22 @@ class CatchAllMailChecker {
         let filtered = this.currentResults;
         
         if (status !== 'all') {
-            if (status === 'catch-all') {
-                filtered = filtered.filter(r => r.is_catch_all);
-            } else {
-                filtered = filtered.filter(r => r.status === status);
-            }
+            filtered = filtered.filter(r => {
+                // Apply the same priority logic as in calculateSummary
+                const isCatchAll = r.is_catch_all || false;
+                const resultStatus = (r.status || 'invalid').toLowerCase();
+                
+                let effectiveStatus;
+                if (isCatchAll || resultStatus === 'catch-all') {
+                    effectiveStatus = 'catch-all';
+                } else if (resultStatus === 'valid') {
+                    effectiveStatus = 'valid';
+                } else {
+                    effectiveStatus = 'invalid';
+                }
+                
+                return effectiveStatus === status;
+            });
         }
         
         if (search) {
