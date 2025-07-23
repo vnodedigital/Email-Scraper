@@ -384,66 +384,192 @@ class CatchAllMailChecker {
         this.currentResults = [];
         
         const totalEmails = emails.length;
+        let processedEmails = 0;
+        let currentCredits = initialCredits.verify_credits;
+        
         this.updateProgress(0, totalEmails);
         
         try {
-            // Use the new batch verification API
-            console.log('Calling batch verify API with emails:', emails);
-            const response = await fetch('/verifier/api/batch-verify/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                },
-                body: JSON.stringify({
-                    emails: emails,
-                    title: title
-                })
-            });
-
-            console.log('API Response status:', response.status);
-            const data = await response.json();
-            console.log('API Response data:', data);
-
-            if (response.ok && data.success) {
-                // Display results
-                this.currentResults = data.results;
-                this.updateProgress(totalEmails, totalEmails);
-                this.updateResultsDisplay();
+            // Process emails one by one for real-time updates (like in working commit c97be29b)
+            for (let i = 0; i < emails.length; i++) {
+                const email = emails[i];
                 
-                // Update credits display
-                if (data.remaining_credits !== undefined) {
-                    this.displayCredits(data.remaining_credits);
-                }
-
-                // Show success message
-                const summary = data.summary;
-                const successMessage = `✅ Verification Complete!\n\n` +
-                    `📧 Total: ${summary.total}\n` +
-                    `✅ Valid: ${summary.valid}\n` +
-                    `⚠️ Catch-All: ${summary.catchall}\n` +
-                    `❌ Invalid: ${summary.invalid}\n` +
-                    `🎯 Success Rate: ${summary.success_rate}%\n\n` +
-                    `💳 Credits Used: ${data.summary.total}\n` +
-                    `💰 Remaining Credits: ${data.remaining_credits}`;
-                
-                this.showCreditAlert(successMessage, 'info');
-
-                // Refresh history display
-                this.loadHistoryFromDatabase();
-
-            } else {
-                // Handle errors
-                let errorMessage = data.error || 'Verification failed';
-                if (data.current_credits !== undefined) {
-                    errorMessage += `\nCurrent Credits: ${data.current_credits}`;
+                // Check credits before each verification
+                if (currentCredits <= 0) {
+                    this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                    break;
                 }
                 
-                this.showCreditAlert(errorMessage, 'error');
-                
-                // Update credits if available
-                if (data.current_credits !== undefined) {
-                    this.displayCredits(data.current_credits);
+                try {
+                    // Verify single email using the single email API
+                    const response = await fetch('/verifier/api/check-email/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Add successful verification result
+                        const result = {
+                            email: data.email,
+                            status: data.status,
+                            reason: data.reason || '',
+                            is_catch_all: data.is_catch_all || false,
+                            domain: data.domain || email.split('@')[1] || '',
+                            score: data.score || 0,
+                            is_disposable: data.is_disposable || false,
+                            is_free_provider: data.is_free_provider || false,
+                            is_role_based: data.is_role_based || false,
+                            is_blacklisted: data.is_blacklisted || false,
+                            spf: data.spf || '',
+                            dkim: data.dkim || '',
+                            dmarc: data.dmarc || ''
+                        };
+                        
+                        // Attach original row if available
+                        if (this.originalRows && this.originalRows.length) {
+                            const orig = this.originalRows.find(r => r.__email === email);
+                            if (orig) result._original = orig;
+                        }
+                        
+                        this.currentResults.push(result);
+                        processedEmails++;
+                        
+                        // Update credits
+                        if (data.remaining_credits !== undefined) {
+                            currentCredits = data.remaining_credits;
+                            this.displayCredits(currentCredits);
+                            
+                            // Show low credit warning
+                            if (currentCredits <= 10 && currentCredits > 0 && !this.lowCreditWarningShown) {
+                                this.showCreditAlert(`Low credit warning: You have ${currentCredits} credits remaining. Consider purchasing more credits to continue verification.`, 'warning');
+                                this.lowCreditWarningShown = true;
+                            }
+                        }
+                        
+                        // UPDATE DISPLAY IMMEDIATELY after each email (REAL-TIME UPDATES!)
+                        this.updateProgress(processedEmails, totalEmails);
+                        this.updateResultsDisplay();
+                        
+                        // Check if credits are exhausted
+                        if (currentCredits <= 0) {
+                            this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                            break;
+                        }
+                        
+                    } else {
+                        // Handle individual email verification failure
+                        console.error(`Failed to verify ${email}:`, data);
+                        
+                        // Add error result
+                        this.currentResults.push({
+                            email: email,
+                            status: 'error',
+                            reason: data.error || 'Verification failed',
+                            is_catch_all: false,
+                            domain: email.split('@')[1] || '',
+                            score: 0,
+                            is_disposable: false,
+                            is_free_provider: false,
+                            is_role_based: false,
+                            is_blacklisted: false,
+                            spf: '',
+                            dkim: '',
+                            dmarc: ''
+                        });
+                        
+                        processedEmails++;
+                        
+                        // UPDATE DISPLAY IMMEDIATELY even for errors
+                        this.updateProgress(processedEmails, totalEmails);
+                        this.updateResultsDisplay();
+                        
+                        // Update credits if available
+                        if (data.current_credits !== undefined) {
+                            currentCredits = data.current_credits;
+                            this.displayCredits(currentCredits);
+                        }
+                        
+                        // Stop if no credits left
+                        if (data.current_credits === 0) {
+                            this.showCreditAlert('Credits exhausted. Verification stopped.', 'error');
+                            break;
+                        }
+                    }
+                    
+                } catch (error) {
+                    if (error.message.includes('INSUFFICIENT_CREDITS')) {
+                        this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                        break;
+                    }
+                    
+                    // For other errors, add error result and continue
+                    this.currentResults.push({
+                        email: email,
+                        status: 'error',
+                        reason: error.message,
+                        is_catch_all: false,
+                        domain: email.split('@')[1] || '',
+                        score: 0,
+                        is_disposable: false,
+                        is_free_provider: false,
+                        is_role_based: false,
+                        is_blacklisted: false,
+                        spf: '',
+                        dkim: '',
+                        dmarc: ''
+                    });
+                    
+                    processedEmails++;
+                    
+                    // UPDATE DISPLAY IMMEDIATELY even for network errors
+                    this.updateProgress(processedEmails, totalEmails);
+                    this.updateResultsDisplay();
+                }
+            }
+            
+            // Save batch results to history after all emails are processed
+            if (processedEmails > 0) {
+                try {
+                    const response = await fetch('/verifier/api/batch-verify/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: JSON.stringify({
+                            emails: emails.slice(0, processedEmails),
+                            title: title,
+                            precomputed_results: this.currentResults
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        // Show success message
+                        const summary = data.summary;
+                        const successMessage = `✅ Verification Complete!\n\n` +
+                            `📧 Total: ${summary.total}\n` +
+                            `✅ Valid: ${summary.valid}\n` +
+                            `⚠️ Catch-All: ${summary.catchall}\n` +
+                            `❌ Invalid: ${summary.invalid}\n` +
+                            `🎯 Success Rate: ${summary.success_rate}%\n\n` +
+                            `💳 Credits Used: ${summary.total}\n` +
+                            `💰 Remaining Credits: ${currentCredits}`;
+                        
+                        this.showCreditAlert(successMessage, 'info');
+
+                        // Refresh history display
+                        this.loadHistoryFromDatabase();
+                    }
+                } catch (error) {
+                    console.error('Failed to save batch to history:', error);
+                    // Don't show error to user as verification was successful
                 }
             }
             
@@ -454,6 +580,10 @@ class CatchAllMailChecker {
             this.isChecking = false;
             this.showLoading(false);
             this.showProgress(false);
+            
+            // Show Clear All button after verification is complete
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) clearBtn.style.display = 'inline-flex';
         }
     }
     
@@ -696,6 +826,11 @@ class CatchAllMailChecker {
         if (resultsTableContainer) resultsTableContainer.style.display = 'none';
         if (resultsSection) resultsSection.style.display = 'none';
         if (clearBtn) clearBtn.style.display = 'none';
+        
+        // Make sure loading overlay is hidden when clearing results
+        this.showLoading(false);
+        this.showProgress(false);
+        this.isChecking = false;
     }
     
     exportResults() {

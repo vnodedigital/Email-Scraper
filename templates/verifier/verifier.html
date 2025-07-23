@@ -1207,6 +1207,16 @@
             initParticleAnimation();
             initTabSystem();
         });
+
+        // Clear current results and hide loading overlay
+        function clearCurrentResults() {
+            // ... existing code ...
+            
+            // Make sure loading overlay is hidden when clearing results
+            this.showLoading(false);
+            this.showProgress(false);
+            this.isChecking = false;
+        }
     </script>
 </div>
 {% endblock body %}
