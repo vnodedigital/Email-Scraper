@@ -564,7 +564,8 @@
         }
 
         .btn-details,
-        .btn-export {
+        .btn-export,
+        .btn-delete {
             padding: 0.5rem 1rem;
             border: none;
             border-radius: 8px;
@@ -597,6 +598,17 @@
         .btn-export:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
 
         .no-history {
@@ -728,7 +740,8 @@
             }
 
             .btn-details,
-            .btn-export {
+            .btn-export,
+            .btn-delete {
                 flex: 1;
                 justify-content: center;
             }
@@ -957,9 +970,9 @@
             <div class="history-section">
                 <h2><i class="fas fa-history"></i> Check History</h2>
                 <div class="history-controls">
-                    <button id="clearHistoryBtn" class="clear-history-btn">
+                    <!-- <button id="clearHistoryBtn" class="clear-history-btn">
                         <i class="fas fa-trash"></i> Clear History
-                    </button>
+                    </button> -->
                     <button id="refreshHistoryBtn" class="btn-secondary">
                         <i class="fas fa-sync"></i> Refresh
                     </button>
@@ -999,6 +1012,9 @@
                                 </button>
                                 <button class="btn-export" data-history-id="{{ history.id }}">
                                     <i class="fas fa-download"></i> Export
+                                </button>
+                                <button class="btn-delete" data-history-id="{{ history.id }}">
+                                    <i class="fas fa-trash"></i> Delete
                                 </button>
                             </div>
                         </div>

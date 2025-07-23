@@ -923,6 +923,9 @@ class CatchAllMailChecker {
                         <button class="btn-export" data-history-id="${item.id}">
                             <i class="fas fa-download"></i> Export
                         </button>
+                        <button class="btn-delete" data-history-id="${item.id}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </div>
                 </div>
             `;
@@ -948,6 +951,14 @@ class CatchAllMailChecker {
             btn.addEventListener('click', (e) => {
                 const historyId = e.target.closest('.btn-export').dataset.historyId;
                 this.showHistoryExportModal(historyId);
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const historyId = e.target.closest('.btn-delete').dataset.historyId;
+                this.deleteHistoryItem(historyId);
             });
         });
     }
@@ -1177,6 +1188,59 @@ class CatchAllMailChecker {
             // Store the history ID for export
             modal.dataset.historyId = historyId;
             modal.style.display = 'flex';
+        }
+    }
+
+    async deleteHistoryItem(historyId) {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to delete this verification history? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/verifier/history/${historyId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Show success message
+                    this.showCreditAlert('✅ History item deleted successfully!', 'info');
+                    
+                    // Remove the item from DOM immediately
+                    const historyItem = document.querySelector(`[data-history-id="${historyId}"]`);
+                    if (historyItem) {
+                        historyItem.style.transform = 'translateX(-100%)';
+                        historyItem.style.opacity = '0';
+                        setTimeout(() => {
+                            historyItem.remove();
+                            
+                            // Check if no history items left
+                            const remainingItems = document.querySelectorAll('.history-item');
+                            if (remainingItems.length === 0) {
+                                const historyList = document.getElementById('historyList');
+                                if (historyList) {
+                                    historyList.innerHTML = '<p class="no-history">No checks performed yet</p>';
+                                }
+                            }
+                        }, 300);
+                    }
+                } else {
+                    this.showCreditAlert('❌ Failed to delete history item: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } else {
+                const data = await response.json();
+                this.showCreditAlert('❌ Failed to delete history item: ' + (data.error || 'Server error'), 'error');
+            }
+        } catch (error) {
+            console.error('Failed to delete history item:', error);
+            this.showCreditAlert('❌ Network error: Failed to delete history item', 'error');
         }
     }
     
