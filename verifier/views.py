@@ -130,11 +130,21 @@ def check_email_api(request):
             # Add remaining credits to the response
             result['remaining_credits'] = user_profile.verify_credits
             
+            # Debug: Log the complete result from smtp_check
+            print(f"[DEBUG] smtp_check result for {email}: {result}")
+            
             # Serialize the response
             response_serializer = EmailVerificationResponseSerializer(data=result)
             if response_serializer.is_valid():
-                return Response(response_serializer.data, status=status.HTTP_200_OK)
+                # Wrap successful response to ensure frontend compatibility
+                success_response = {
+                    "success": True,
+                    **response_serializer.data
+                }
+                print(f"[DEBUG] Final API response: {success_response}")
+                return Response(success_response, status=status.HTTP_200_OK)
             else:
+                print(f"[DEBUG] Serializer errors: {response_serializer.errors}")
                 return Response(
                     {"error": "Invalid response data", "details": response_serializer.errors},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -161,13 +171,167 @@ def check_credits(request):
             "user": request.user.username,
             "verify_credits": user_profile.verify_credits,
             "email_credits": user_profile.email_credits,
-            "subscription_package": user_profile.subscription_package,
+            "scraper_package": user_profile.scraper_package,
+            "verifier_package": user_profile.verifier_package,
             "status": user_profile.status
         }, status=status.HTTP_200_OK)
     except UserProfile.DoesNotExist:
         return Response(
             {"error": "User profile not found"},
             status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def usage_statistics(request):
+    """
+    API endpoint to get user's credit usage statistics
+    """
+    try:
+        from datetime import datetime, timedelta
+        from django.db.models import Sum, Count
+        from collections import defaultdict
+        
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+        
+        # Get verification history for usage calculations
+        now = datetime.now()
+        today = now.date()
+        week_start = today - timedelta(days=today.weekday())
+        month_start = today.replace(day=1)
+        
+        # Import the VerificationHistory model
+        from .models import VerificationHistory
+        
+        # Get usage data from verification history
+        try:
+            # Today's usage
+            today_usage = VerificationHistory.objects.filter(
+                user=user,
+                created_at__date=today
+            ).aggregate(
+                total_emails=Sum('email_count')
+            )['total_emails'] or 0
+            
+            # This week's usage
+            week_usage = VerificationHistory.objects.filter(
+                user=user,
+                created_at__date__gte=week_start
+            ).aggregate(
+                total_emails=Sum('email_count')
+            )['total_emails'] or 0
+            
+            # This month's usage
+            month_usage = VerificationHistory.objects.filter(
+                user=user,
+                created_at__date__gte=month_start
+            ).aggregate(
+                total_emails=Sum('email_count')
+            )['total_emails'] or 0
+            
+            # Calculate average daily usage (last 30 days)
+            thirty_days_ago = today - timedelta(days=30)
+            recent_usage = VerificationHistory.objects.filter(
+                user=user,
+                created_at__date__gte=thirty_days_ago
+            ).aggregate(
+                total_emails=Sum('email_count'),
+                total_days=Count('created_at__date', distinct=True)
+            )
+            
+            total_recent_emails = recent_usage['total_emails'] or 0
+            active_days = recent_usage['total_days'] or 1
+            average_daily = round(total_recent_emails / max(active_days, 1), 1)
+            
+            # Calculate total usage all time
+            total_usage = VerificationHistory.objects.filter(
+                user=user
+            ).aggregate(
+                total_emails=Sum('email_count')
+            )['total_emails'] or 0
+            
+        except Exception as e:
+            # Fallback to mock data if models don't exist or error occurs
+            today_usage = 0
+            week_usage = 0
+            month_usage = 0
+            average_daily = 0
+            total_usage = 0
+        
+        # Calculate estimates
+        current_credits = user_profile.verify_credits
+        estimated_days = '∞'
+        if average_daily > 0:
+            estimated_days = max(1, int(current_credits / average_daily))
+        
+        # Generate daily usage for last 30 days (for chart)
+        daily_usage = []
+        for i in range(30):
+            date = today - timedelta(days=29-i)
+            try:
+                day_usage = VerificationHistory.objects.filter(
+                    user=user,
+                    created_at__date=date
+                ).aggregate(
+                    total_emails=Sum('email_count')
+                )['total_emails'] or 0
+                daily_usage.append(day_usage)
+            except:
+                daily_usage.append(0)
+        
+        # Credit usage insights
+        insights = []
+        if current_credits <= 5:
+            insights.append({
+                'type': 'critical',
+                'message': 'Critical: Less than 5 credits remaining. Purchase more credits immediately.',
+                'action': 'purchase'
+            })
+        elif current_credits <= 10:
+            insights.append({
+                'type': 'warning', 
+                'message': 'Warning: Less than 10 credits remaining. Consider purchasing more credits.',
+                'action': 'purchase'
+            })
+            
+        if average_daily > 10:
+            insights.append({
+                'type': 'info',
+                'message': 'High usage detected. Consider upgrading to a higher credit package.',
+                'action': 'upgrade'
+            })
+            
+        if estimated_days != '∞' and estimated_days < 3:
+            insights.append({
+                'type': 'urgent',
+                'message': f'Credits will run out in {estimated_days} days at current usage rate.',
+                'action': 'immediate_purchase'
+            })
+        
+        return Response({
+            "current_credits": current_credits,
+            "used_today": today_usage,
+            "used_this_week": week_usage,
+            "used_this_month": month_usage,
+            "average_daily": average_daily,
+            "total_used": total_usage,
+            "estimated_days": estimated_days,
+            "daily_usage_chart": daily_usage,
+            "insights": insights,
+            "last_updated": now.isoformat()
+        }, status=status.HTTP_200_OK)
+        
+    except UserProfile.DoesNotExist:
+        return Response(
+            {"error": "User profile not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to get usage statistics: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
@@ -249,29 +413,17 @@ def batch_verify_emails(request):
                 result = smtp_check(email.strip())
                 results.append(result)
                 
-                # Count results based on catch-all priority logic with detailed debugging
+                # Count results based on catch-all priority logic
                 is_catch_all = result.get('is_catch_all', False)
                 status = result.get('status', 'invalid').lower()
-                
-                # Debug: Log every email verification result
-                print(f"[CATCH-ALL DEBUG] Email: {email.strip()}")
-                print(f"[CATCH-ALL DEBUG] Status: '{status}'")
-                print(f"[CATCH-ALL DEBUG] is_catch_all: {is_catch_all}")
-                print(f"[CATCH-ALL DEBUG] All result fields: {list(result.keys())}")
                 
                 # Apply priority: Catch-all > Valid > Invalid
                 if is_catch_all or status == 'catch-all':
                     catchall_count += 1
-                    print(f"[CATCH-ALL DEBUG] ✅ Counted as CATCH-ALL. Total catch-all: {catchall_count}")
                 elif status == 'valid':
                     valid_count += 1
-                    print(f"[CATCH-ALL DEBUG] Counted as VALID. Total valid: {valid_count}")
                 else:
                     invalid_count += 1
-                    print(f"[CATCH-ALL DEBUG] Counted as INVALID. Total invalid: {invalid_count}")
-                
-                print(f"[CATCH-ALL DEBUG] Current counts: Valid={valid_count}, Invalid={invalid_count}, Catch-all={catchall_count}")
-                print(f"[CATCH-ALL DEBUG] ---")
                     
             except Exception as e:
                 # If verification fails, still add to results
@@ -286,6 +438,7 @@ def batch_verify_emails(request):
                 }
                 results.append(result)
                 invalid_count += 1
+                print(f"[SMTP ERROR] Exception verifying {email.strip()}: {str(e)}")
         
         # Deduct credits
         credits_used = len(emails)

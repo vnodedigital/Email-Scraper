@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/check-email/', views.check_email_api, name='check_email_api'),
     path('api/batch-verify/', views.batch_verify_emails, name='batch_verify_emails'),
     path('api/check-credits/', views.check_credits, name='check_credits'),
+    path('api/usage-statistics/', views.usage_statistics, name='usage_statistics'),
     path('api/health/', views.health_check, name='health_check'),
     path('api/auth-status/', views.auth_status, name='auth_status'),
 ]

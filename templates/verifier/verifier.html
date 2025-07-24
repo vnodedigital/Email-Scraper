@@ -123,6 +123,161 @@
             font-weight: bold !important;
         }
 
+        /* Credit Alert Badge Styles */
+        .credit-alert-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: help;
+            transition: all 0.3s ease;
+        }
+
+        .alert-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert-badge.critical {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            animation: pulse-critical 2s infinite;
+        }
+
+        .alert-badge.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            animation: pulse-warning 3s infinite;
+        }
+
+        .alert-badge.caution {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .alert-badge.normal {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        @keyframes pulse-critical {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Credit Usage Report Styles */
+        .credit-usage-report {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .credit-usage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .usage-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .usage-stat-card {
+            background: rgba(248, 250, 252, 0.8);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .usage-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .usage-stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .usage-stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .credit-alert-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .alert-action-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .alert-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-purchase {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+        }
+
+        .btn-view-usage {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .btn-notification-settings {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
         /* Override main content styling */
         .main-content {
             background: rgba(255, 255, 255, 0.95);
@@ -636,12 +791,12 @@
 
         .details-modal-content {
             background: white;
-            margin: 10% auto;
+            margin: 7% auto 5% auto;
             padding: 0;
             border-radius: 20px;
             width: 95%;
             max-width: 1200px;
-            max-height: 90vh;
+            max-height: 82vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             position: relative;
@@ -787,6 +942,26 @@
                         {% endif %}
                     ">{{ user_profile.verify_credits }}</span>
                 </span>
+                <!-- Credit Alert Status Indicator -->
+                <div class="credit-alert-indicator" id="creditAlertIndicator" style="margin-left: 1rem;">
+                    {% if user_profile.verify_credits <= 5 %}
+                        <span class="alert-badge critical" title="Critical: Credits below 5">
+                            <i class="fas fa-exclamation-triangle"></i> Critical
+                        </span>
+                    {% elif user_profile.verify_credits <= 10 %}
+                        <span class="alert-badge warning" title="Warning: Credits below 10">
+                            <i class="fas fa-exclamation-circle"></i> Low
+                        </span>
+                    {% elif user_profile.verify_credits <= 25 %}
+                        <span class="alert-badge caution" title="Caution: Credits below 25">
+                            <i class="fas fa-info-circle"></i> Medium
+                        </span>
+                    {% else %}
+                        <span class="alert-badge normal" title="Normal: Sufficient credits">
+                            <i class="fas fa-check-circle"></i> Good
+                        </span>
+                    {% endif %}
+                </div>
             </div>
         </header>
 
@@ -968,15 +1143,20 @@
 
             <!-- History Section -->
             <div class="history-section">
-                <h2><i class="fas fa-history"></i> Check History</h2>
-                <div class="history-controls">
-                    <!-- <button id="clearHistoryBtn" class="clear-history-btn">
-                        <i class="fas fa-trash"></i> Clear History
-                    </button> -->
-                    <button id="refreshHistoryBtn" class="btn-secondary">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><h2><i class="fas fa-history"></i> Check History ({{ history_list.count }} items)</h2></span>
+                    <span><button id="refreshHistoryBtn" class="btn-secondary">
                         <i class="fas fa-sync"></i> Refresh
-                    </button>
+                    </button></span>
                 </div>
+                
+                <!-- <div class="history-controls">
+                    <button id="clearHistoryBtn" class="clear-history-btn">
+                        <i class="fas fa-trash"></i> Clear History
+                    </button>
+                </div> -->
+                <hr>
+                <br>
                 <div class="history-list" id="historyList">
                     {% if history_list %}
                         {% for history in history_list %}
@@ -1022,6 +1202,69 @@
                     {% else %}
                         <p class="no-history">No checks performed yet</p>
                     {% endif %}
+                </div>
+            </div>
+
+            <!-- Credit Usage Report Section -->
+            <div class="credit-usage-report">
+                <div class="credit-usage-header">
+                    <h2><i class="fas fa-chart-pie"></i> Credit Usage Report</h2>
+                    <button id="refreshUsageBtn" class="btn-secondary">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+                
+                <div class="usage-stats" id="usageStats">
+                    <div class="usage-stat-card">
+                        <div class="usage-stat-number" id="currentCredits">{{ user_profile.verify_credits }}</div>
+                        <div class="usage-stat-label">Current Credits</div>
+                    </div>
+                    <div class="usage-stat-card">
+                        <div class="usage-stat-number" id="usedToday">0</div>
+                        <div class="usage-stat-label">Used Today</div>
+                    </div>
+                    <div class="usage-stat-card">
+                        <div class="usage-stat-number" id="usedThisWeek">0</div>
+                        <div class="usage-stat-label">Used This Week</div>
+                    </div>
+                    <div class="usage-stat-card">
+                        <div class="usage-stat-number" id="usedThisMonth">0</div>
+                        <div class="usage-stat-label">Used This Month</div>
+                    </div>
+                    <div class="usage-stat-card">
+                        <div class="usage-stat-number" id="averageDaily">0</div>
+                        <div class="usage-stat-label">Avg Daily Usage</div>
+                    </div>
+                    <div class="usage-stat-card">
+                        <div class="usage-stat-number" id="estimatedDays">∞</div>
+                        <div class="usage-stat-label">Days Remaining</div>
+                    </div>
+                </div>
+
+                <!-- Credit Alert Actions -->
+                <div class="credit-alert-actions" id="creditAlertActions">
+                    <a href="/package/" class="alert-action-btn btn-purchase">
+                        <i class="fas fa-shopping-cart"></i> Purchase More Credits
+                    </a>
+                    <button class="alert-action-btn btn-view-usage" onclick="showDetailedUsageModal()">
+                        <i class="fas fa-chart-line"></i> Detailed Usage Report
+                    </button>
+                    <button class="alert-action-btn btn-notification-settings" onclick="showNotificationSettings()">
+                        <i class="fas fa-bell"></i> Alert Settings
+                    </button>
+                </div>
+
+                <!-- Credit Alert Level Information -->
+                <div class="credit-alert-info" style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-info-circle"></i> Credit Alert Levels
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.9rem;">
+                        <div><strong style="color: #059669;">Good (>25):</strong> Sufficient credits</div>
+                        <div><strong style="color: #3b82f6;">Medium (11-25):</strong> Monitor usage</div>
+                        <div><strong style="color: #f59e0b;">Low (6-10):</strong> Consider purchasing</div>
+                        <div><strong style="color: #dc2626;">Critical (≤5):</strong> Immediate action needed</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1120,12 +1363,106 @@
                 </div>
             </div>
         </div>
+
+        <!-- Detailed Usage Modal -->
+        <div id="detailedUsageModal" class="details-modal" style="z-index: 1000;">
+            <div class="details-modal-content">
+                <div class="details-modal-header">
+                    <h2><i class="fas fa-chart-line"></i> Detailed Credit Usage Report</h2>
+                    <p>Comprehensive analysis of your verification credit usage patterns</p>
+                    <button class="close-modal" onclick="closeDetailedUsageModal()">&times;</button>
+                </div>
+                <div class="details-modal-body">
+                    <div class="details-summary" id="detailedUsageSummary">
+                        <!-- Detailed usage stats will be populated here -->
+                    </div>
+                    
+                    <div class="usage-chart-container" style="margin-top: 2rem;">
+                        <h3>Usage Trend (Last 30 Days)</h3>
+                        <canvas id="usageChart" width="400" height="200" style="background: white; border-radius: 8px; padding: 1rem;"></canvas>
+                    </div>
+
+                    <div class="usage-recommendations" style="margin-top: 2rem;">
+                        <h3><i class="fas fa-lightbulb"></i> Recommendations</h3>
+                        <div id="usageRecommendations" style="background: rgba(248, 250, 252, 0.8); padding: 1rem; border-radius: 12px;">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings Modal -->
+        <div id="notificationSettingsModal" class="details-modal" style="z-index: 1000;">
+            <div class="details-modal-content" style="max-width: 600px;">
+                <div class="details-modal-header">
+                    <h2><i class="fas fa-bell"></i> Credit Alert Settings</h2>
+                    <p>Configure when and how you receive credit notifications</p>
+                    <button class="close-modal" onclick="closeNotificationSettings()">&times;</button>
+                </div>
+                <div class="details-modal-body">
+                    <div class="notification-settings-form">
+                        <div class="form-group">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                <i class="fas fa-exclamation-triangle" style="color: #dc2626;"></i> Critical Alert Threshold
+                            </label>
+                            <select id="criticalThreshold" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 2px solid #e2e8f0;">
+                                <option value="3">3 credits or less</option>
+                                <option value="5" selected>5 credits or less</option>
+                                <option value="10">10 credits or less</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                <i class="fas fa-exclamation-circle" style="color: #f59e0b;"></i> Warning Alert Threshold
+                            </label>
+                            <select id="warningThreshold" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 2px solid #e2e8f0;">
+                                <option value="10" selected>10 credits or less</option>
+                                <option value="15">15 credits or less</option>
+                                <option value="20">20 credits or less</option>
+                                <option value="25">25 credits or less</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                <i class="fas fa-envelope" style="color: #3b82f6;"></i> Email Notifications
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="emailNotifications" checked style="width: 18px; height: 18px;">
+                                <span>Send email alerts when thresholds are reached</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                <i class="fas fa-desktop" style="color: #8b5cf6;"></i> Browser Notifications
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="browserNotifications" checked style="width: 18px; height: 18px;">
+                                <span>Show popup alerts in browser</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                            <button onclick="saveNotificationSettings()" class="alert-action-btn btn-purchase">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                            <button onclick="closeNotificationSettings()" class="alert-action-btn btn-view-usage">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     {% csrf_token %}
     
     <!-- Load JavaScript -->
-    <script src="{% static 'js/mailChecker.js' %}?v=1753160500"></script>
+    <script src="{% static 'js/mailChecker.js' %}?v=1753261800"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <!-- Particle Animation Script -->
@@ -1222,7 +1559,244 @@
         document.addEventListener('DOMContentLoaded', () => {
             initParticleAnimation();
             initTabSystem();
+            initCreditUsageReport();
         });
+
+        // Initialize credit usage report functionality
+        function initCreditUsageReport() {
+            // Set up event listeners
+            const refreshUsageBtn = document.getElementById('refreshUsageBtn');
+            if (refreshUsageBtn) {
+                refreshUsageBtn.addEventListener('click', () => {
+                    if (window.mailChecker) {
+                        window.mailChecker.loadAndDisplayCredits();
+                    }
+                });
+            }
+
+            // Load initial usage data if mailChecker is available
+            if (window.mailChecker) {
+                window.mailChecker.loadAndDisplayCredits();
+            }
+        }
+
+        // Show detailed usage modal
+        function showDetailedUsageModal() {
+            const modal = document.getElementById('detailedUsageModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                loadDetailedUsageData();
+            }
+        }
+
+        // Close detailed usage modal
+        function closeDetailedUsageModal() {
+            const modal = document.getElementById('detailedUsageModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Load detailed usage data
+        async function loadDetailedUsageData() {
+            const summaryDiv = document.getElementById('detailedUsageSummary');
+            const recommendationsDiv = document.getElementById('usageRecommendations');
+            
+            if (summaryDiv) {
+                summaryDiv.innerHTML = `
+                    <div class="detail-stat">
+                        <div class="detail-stat-number" style="color: #059669;">${document.getElementById('currentCredits')?.textContent || '0'}</div>
+                        <div class="detail-stat-label">Current Credits</div>
+                    </div>
+                    <div class="detail-stat">
+                        <div class="detail-stat-number" style="color: #dc2626;">${document.getElementById('usedToday')?.textContent || '0'}</div>
+                        <div class="detail-stat-label">Used Today</div>
+                    </div>
+                    <div class="detail-stat">
+                        <div class="detail-stat-number" style="color: #f59e0b;">${document.getElementById('usedThisWeek')?.textContent || '0'}</div>
+                        <div class="detail-stat-label">Used This Week</div>
+                    </div>
+                    <div class="detail-stat">
+                        <div class="detail-stat-number" style="color: #3b82f6;">${document.getElementById('usedThisMonth')?.textContent || '0'}</div>
+                        <div class="detail-stat-label">Used This Month</div>
+                    </div>
+                    <div class="detail-stat">
+                        <div class="detail-stat-number" style="color: #8b5cf6;">${document.getElementById('averageDaily')?.textContent || '0'}</div>
+                        <div class="detail-stat-label">Avg Daily Usage</div>
+                    </div>
+                    <div class="detail-stat">
+                        <div class="detail-stat-number" style="color: #059669;">${document.getElementById('estimatedDays')?.textContent || '∞'}</div>
+                        <div class="detail-stat-label">Days Remaining</div>
+                    </div>
+                `;
+            }
+
+            if (recommendationsDiv) {
+                const currentCredits = parseInt(document.getElementById('currentCredits')?.textContent || '0');
+                const avgDaily = parseInt(document.getElementById('averageDaily')?.textContent || '0');
+                
+                let recommendations = [];
+                
+                if (currentCredits <= 5) {
+                    recommendations.push('🚨 <strong>Urgent:</strong> Your credits are critically low. Purchase more credits immediately to avoid service interruption.');
+                } else if (currentCredits <= 10) {
+                    recommendations.push('⚠️ <strong>Warning:</strong> You have less than 10 credits remaining. Consider purchasing more credits soon.');
+                } else if (currentCredits <= 25) {
+                    recommendations.push('ℹ️ <strong>Notice:</strong> Monitor your usage carefully as you approach low credit levels.');
+                }
+                
+                if (avgDaily > 10) {
+                    recommendations.push('📊 <strong>High Usage:</strong> You\'re using more than 10 credits daily. Consider upgrading to a higher credit package.');
+                } else if (avgDaily < 2) {
+                    recommendations.push('💡 <strong>Low Usage:</strong> Your current usage pattern is efficient. Current credit level should last a while.');
+                }
+                
+                const estimatedDays = document.getElementById('estimatedDays')?.textContent;
+                if (estimatedDays !== '∞' && parseInt(estimatedDays) < 7) {
+                    recommendations.push('⏰ <strong>Time Sensitive:</strong> Based on current usage, credits will run out in less than a week.');
+                }
+                
+                if (recommendations.length === 0) {
+                    recommendations.push('✅ <strong>All Good:</strong> Your credit usage pattern looks healthy. Keep monitoring for any changes.');
+                }
+                
+                recommendationsDiv.innerHTML = recommendations.map(rec => `<p style="margin: 0.5rem 0;">${rec}</p>`).join('');
+            }
+
+            // Simple chart simulation (you could integrate Chart.js here)
+            drawUsageChart();
+        }
+
+        // Draw usage chart (simple canvas implementation)
+        function drawUsageChart() {
+            const canvas = document.getElementById('usageChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw background
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Generate sample data for last 30 days
+            const data = [];
+            for (let i = 0; i < 30; i++) {
+                data.push(Math.floor(Math.random() * 15) + 1);
+            }
+            
+            // Draw chart
+            const maxValue = Math.max(...data);
+            const pointWidth = width / data.length;
+            const chartHeight = height - 40;
+            
+            ctx.strokeStyle = '#3b82f6';
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            data.forEach((value, index) => {
+                const x = index * pointWidth;
+                const y = chartHeight - (value / maxValue) * chartHeight + 20;
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // Fill area under curve
+            ctx.lineTo((data.length - 1) * pointWidth, chartHeight + 20);
+            ctx.lineTo(0, chartHeight + 20);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw axis labels
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('30 days ago', 10, height - 5);
+            ctx.fillText('Today', width - 40, height - 5);
+            ctx.fillText('Credits Used', 10, 15);
+        }
+
+        // Show notification settings modal
+        function showNotificationSettings() {
+            const modal = document.getElementById('notificationSettingsModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                loadNotificationSettings();
+            }
+        }
+
+        // Close notification settings modal
+        function closeNotificationSettings() {
+            const modal = document.getElementById('notificationSettingsModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Load notification settings from local storage
+        function loadNotificationSettings() {
+            const settings = JSON.parse(localStorage.getItem('creditAlertSettings') || '{}');
+            
+            const criticalThreshold = document.getElementById('criticalThreshold');
+            const warningThreshold = document.getElementById('warningThreshold');
+            const emailNotifications = document.getElementById('emailNotifications');
+            const browserNotifications = document.getElementById('browserNotifications');
+            
+            if (criticalThreshold) criticalThreshold.value = settings.criticalThreshold || '5';
+            if (warningThreshold) warningThreshold.value = settings.warningThreshold || '10';
+            if (emailNotifications) emailNotifications.checked = settings.emailNotifications !== false;
+            if (browserNotifications) browserNotifications.checked = settings.browserNotifications !== false;
+        }
+
+        // Save notification settings
+        function saveNotificationSettings() {
+            const settings = {
+                criticalThreshold: document.getElementById('criticalThreshold')?.value || '5',
+                warningThreshold: document.getElementById('warningThreshold')?.value || '10',
+                emailNotifications: document.getElementById('emailNotifications')?.checked || false,
+                browserNotifications: document.getElementById('browserNotifications')?.checked || false
+            };
+            
+            localStorage.setItem('creditAlertSettings', JSON.stringify(settings));
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #059669, #047857);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+            `;
+            successMsg.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Alert settings saved successfully!</span>
+                </div>
+            `;
+            
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                successMsg.remove();
+            }, 3000);
+            
+            closeNotificationSettings();
+        }
 
         // Clear current results and hide loading overlay
         function clearCurrentResults() {

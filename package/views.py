@@ -22,12 +22,37 @@ def subscription(request, package):
             messages.error(request, 'You have already claimed your free package.')
             return redirect('package:package')
         else:
-            user.profile.subscription_package = 'free'
+            user.profile.scraper_package = 'free'
             user.profile.email_credits += 500
             user.profile.subscription_start = timezone.now()
             user.profile.subscription_end = timezone.now() + timedelta(days=30)
             user.profile.claimed_free_package = True
             user.profile.save()
         messages.success(request, 'You have successfully subscribed to the free plan with 500 email credits. Your subscription will end on ' + user.profile.subscription_end.strftime('%Y-%m-%d'))
+    return redirect('package:package')
+
+
+def verifier_package(request):
+    user = request.user
+    context = {
+        'user': user,
+    }
+    return render(request, 'package/verifier_pricing.html', context)
+
+
+def verifier_subscription(request, package):
+    user = request.user
+    if package == 'free':
+        if user.profile.claimed_free_verifier_package:
+            messages.error(request, 'You have already claimed your free verifier package.')
+            return redirect('package:package')
+        else:
+            user.profile.verifier_package = 'free'
+            user.profile.verify_credits += 100
+            user.profile.subscription_start = timezone.now()
+            user.profile.subscription_end = timezone.now() + timedelta(days=30)
+            user.profile.claimed_free_verifier_package = True
+            user.profile.save()
+        messages.success(request, 'You have successfully subscribed to the free verifier plan with 100 verification credits. Your subscription will end on ' + user.profile.subscription_end.strftime('%Y-%m-%d'))
     return redirect('package:package')
 

@@ -15,6 +15,7 @@ class EmailVerificationSerializer(serializers.Serializer):
 
 class EmailVerificationResponseSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    domain = serializers.CharField(allow_blank=True, required=False)
     status = serializers.CharField()
     reason = serializers.CharField(allow_blank=True)
     is_disposable = serializers.BooleanField()
@@ -26,4 +27,8 @@ class EmailVerificationResponseSerializer(serializers.Serializer):
     spf = serializers.CharField(allow_null=True, allow_blank=True)
     dmarc = serializers.CharField(allow_null=True, allow_blank=True)
     dkim = serializers.CharField(allow_null=True, allow_blank=True)
+    # CRITICAL: Add missing SMTP fields that backend returns
+    smtp_valid = serializers.BooleanField(allow_null=True, required=False)
+    mx_host = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    port = serializers.IntegerField(allow_null=True, required=False)
     remaining_credits = serializers.IntegerField(required=False)

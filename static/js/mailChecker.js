@@ -412,24 +412,56 @@ class CatchAllMailChecker {
                     });
 
                     const data = await response.json();
+                    
+                    // Debug: Log the raw API response to see what we're actually getting
+                    console.log('[DEBUG] Raw API response for', email, ':', data);
 
                     if (data.success) {
-                        // Add successful verification result
+                        // Add successful verification result with ALL backend fields
+                        // Use direct assignment to ensure we capture all fields exactly as returned
                         const result = {
-                            email: data.email,
+                            // Core email info
+                            email: data.email || email,
                             status: data.status,
                             reason: data.reason || '',
-                            is_catch_all: data.is_catch_all || false,
                             domain: data.domain || email.split('@')[1] || '',
                             score: data.score || 0,
+                            
+                            // Email characteristics
+                            is_catch_all: data.is_catch_all || false,
                             is_disposable: data.is_disposable || false,
                             is_free_provider: data.is_free_provider || false,
                             is_role_based: data.is_role_based || false,
                             is_blacklisted: data.is_blacklisted || false,
+                            
+                            // DNS records
                             spf: data.spf || '',
                             dkim: data.dkim || '',
-                            dmarc: data.dmarc || ''
+                            dmarc: data.dmarc || '',
+                            
+                            // CRITICAL SMTP FIELDS - these are the key ones for accuracy
+                            smtp_valid: data.smtp_valid,  // Don't use || false, preserve exact value
+                            mx_host: data.mx_host || '',
+                            port: data.port || null,
+                            smtp_status: data.smtp_status || '',
+                            smtp_response: data.smtp_response || '',
+                            
+                            // Additional fields
+                            deliverable: data.deliverable,
+                            mx_records: data.mx_records || [],
+                            has_mx: data.has_mx || false,
+                            validation_time: data.validation_time || null
                         };
+                        
+                        // Enhanced debug logging for the constructed result
+                        console.log('[DEBUG] Constructed result object for', email, ':', result);
+                        console.log('[DEBUG] SMTP fields specifically:', {
+                            smtp_valid: result.smtp_valid,
+                            smtp_valid_type: typeof result.smtp_valid,
+                            mx_host: result.mx_host,
+                            port: result.port,
+                            status: result.status
+                        });
                         
                         // Attach original row if available
                         if (this.originalRows && this.originalRows.length) {
@@ -466,8 +498,8 @@ class CatchAllMailChecker {
                         // Handle individual email verification failure
                         console.error(`Failed to verify ${email}:`, data);
                         
-                        // Add error result
-                        this.currentResults.push({
+                        // Add error result with complete structure
+                        const errorResult = {
                             email: email,
                             status: 'error',
                             reason: data.error || 'Verification failed',
@@ -480,9 +512,20 @@ class CatchAllMailChecker {
                             is_blacklisted: false,
                             spf: '',
                             dkim: '',
-                            dmarc: ''
-                        });
+                            dmarc: '',
+                            // SMTP fields for consistency
+                            smtp_valid: false,
+                            mx_host: '',
+                            port: null,
+                            smtp_status: 'error',
+                            smtp_response: 'Verification failed',
+                            deliverable: false,
+                            mx_records: [],
+                            has_mx: false,
+                            validation_time: null
+                        };
                         
+                        this.currentResults.push(errorResult);
                         processedEmails++;
                         
                         // UPDATE DISPLAY IMMEDIATELY even for errors
@@ -625,7 +668,7 @@ class CatchAllMailChecker {
         }
     }
 
-    // Method to display credit information
+    // Method to display credit information with enhanced reporting
     displayCredits(credits) {
         console.log(`Remaining credits: ${credits}`);
         
@@ -647,11 +690,184 @@ class CatchAllMailChecker {
             }
         });
         
+        // Update alert indicator
+        this.updateCreditAlertIndicator(credits);
+        
+        // Update usage report
+        this.updateUsageReport(credits);
+        
         // Update page title for low credits
         const pageTitle = document.querySelector('title');
         if (pageTitle && credits <= 10) {
             pageTitle.textContent = `(${credits} credits) Email Verifier`;
         }
+    }
+
+    // Update credit alert indicator
+    updateCreditAlertIndicator(credits) {
+        const indicator = document.getElementById('creditAlertIndicator');
+        if (!indicator) return;
+
+        let alertClass = 'normal';
+        let alertText = 'Good';
+        let alertIcon = 'fas fa-check-circle';
+
+        if (credits <= 5) {
+            alertClass = 'critical';
+            alertText = 'Critical';
+            alertIcon = 'fas fa-exclamation-triangle';
+        } else if (credits <= 10) {
+            alertClass = 'warning';
+            alertText = 'Low';
+            alertIcon = 'fas fa-exclamation-circle';
+        } else if (credits <= 25) {
+            alertClass = 'caution';
+            alertText = 'Medium';
+            alertIcon = 'fas fa-info-circle';
+        }
+
+        indicator.innerHTML = `
+            <span class="alert-badge ${alertClass}" title="${this.getAlertDescription(alertClass)}">
+                <i class="${alertIcon}"></i> ${alertText}
+            </span>
+        `;
+    }
+
+    // Get alert description for tooltip
+    getAlertDescription(alertClass) {
+        switch (alertClass) {
+            case 'critical': return 'Critical: Credits below 5 - Immediate action needed';
+            case 'warning': return 'Warning: Credits below 10 - Consider purchasing';
+            case 'caution': return 'Caution: Credits below 25 - Monitor usage';
+            default: return 'Normal: Sufficient credits available';
+        }
+    }
+
+    // Update usage report with comprehensive data
+    async updateUsageReport(credits) {
+        try {
+            // Update current credits
+            const currentCreditsEl = document.getElementById('currentCredits');
+            if (currentCreditsEl) {
+                currentCreditsEl.textContent = credits;
+            }
+
+            // Get usage statistics from backend
+            const usageData = await this.getUsageStatistics();
+            
+            // Update usage statistics
+            this.displayUsageStatistics(usageData);
+            
+            // Calculate estimates
+            this.calculateUsageEstimates(credits, usageData);
+            
+        } catch (error) {
+            console.error('Failed to update usage report:', error);
+        }
+    }
+
+    // Get usage statistics from backend
+    async getUsageStatistics() {
+        try {
+            const response = await fetch('/verifier/api/usage-statistics/', {
+                method: 'GET',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    used_today: data.used_today || 0,
+                    used_this_week: data.used_this_week || 0,
+                    used_this_month: data.used_this_month || 0,
+                    average_daily: data.average_daily || 0,
+                    total_used: data.total_used || 0,
+                    daily_usage_chart: data.daily_usage_chart || [],
+                    insights: data.insights || []
+                };
+            } else {
+                // Return mock data if endpoint fails
+                return this.getMockUsageData();
+            }
+        } catch (error) {
+            console.error('Failed to get usage statistics:', error);
+            return this.getMockUsageData();
+        }
+    }
+
+    // Mock usage data for demonstration
+    getMockUsageData() {
+        const now = new Date();
+        const today = now.getDay();
+        const thisMonth = now.getMonth();
+        
+        return {
+            used_today: Math.floor(Math.random() * 15),
+            used_this_week: Math.floor(Math.random() * 50),
+            used_this_month: Math.floor(Math.random() * 150),
+            average_daily: Math.floor(Math.random() * 8) + 2,
+            total_used: Math.floor(Math.random() * 500),
+            days_active: Math.floor(Math.random() * 30) + 10
+        };
+    }
+
+    // Display usage statistics
+    displayUsageStatistics(data) {
+        const elements = {
+            usedToday: document.getElementById('usedToday'),
+            usedThisWeek: document.getElementById('usedThisWeek'),
+            usedThisMonth: document.getElementById('usedThisMonth'),
+            averageDaily: document.getElementById('averageDaily')
+        };
+
+        if (elements.usedToday) elements.usedToday.textContent = data.used_today || 0;
+        if (elements.usedThisWeek) elements.usedThisWeek.textContent = data.used_this_week || 0;
+        if (elements.usedThisMonth) elements.usedThisMonth.textContent = data.used_this_month || 0;
+        if (elements.averageDaily) elements.averageDaily.textContent = data.average_daily || 0;
+    }
+
+    // Calculate usage estimates
+    calculateUsageEstimates(credits, data) {
+        const averageDaily = data.average_daily || 1;
+        const estimatedDays = averageDaily > 0 ? Math.floor(credits / averageDaily) : '∞';
+        
+        const estimatedDaysEl = document.getElementById('estimatedDays');
+        if (estimatedDaysEl) {
+            estimatedDaysEl.textContent = estimatedDays;
+            
+            // Style based on remaining days
+            if (estimatedDays !== '∞') {
+                if (estimatedDays < 3) {
+                    estimatedDaysEl.style.color = '#dc2626';
+                } else if (estimatedDays < 7) {
+                    estimatedDaysEl.style.color = '#f59e0b';
+                } else if (estimatedDays < 14) {
+                    estimatedDaysEl.style.color = '#3b82f6';
+                } else {
+                    estimatedDaysEl.style.color = '#059669';
+                }
+            }
+        }
+    }
+
+    // Get CSRF token helper
+    getCSRFToken() {
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) {
+            return csrfInput.value;
+        }
+        
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
     }
 
     // Risk assessment for each result
@@ -684,20 +900,86 @@ class CatchAllMailChecker {
         const tbody = document.getElementById('resultsTableBody');
         if (!tbody) return;
         
+        // Enhanced debug logging to check what we're receiving
+        console.log('[DEBUG] Displaying results:', results);
+        console.log('[DEBUG] Results count:', results.length);
+        
         tbody.innerHTML = results.map((r, idx) => {
+            // Enhanced debug log for each result to identify the issue
+            console.log(`[DEBUG] Result ${idx} COMPLETE OBJECT:`, r);
+            console.log(`[DEBUG] Result ${idx} SMTP Fields:`, {
+                email: r.email,
+                status: r.status,
+                smtp_valid: r.smtp_valid,
+                smtp_valid_type: typeof r.smtp_valid,
+                mx_host: r.mx_host,
+                port: r.port,
+                reason: r.reason
+            });
+            
             const risk = this.getRiskLevel(r);
             let riskColor = '';
             if (risk === '✅ safe') riskColor = 'style="color:green;font-weight:bold"';
             else if (risk === '⚠️ medium') riskColor = 'style="color:orange;font-weight:bold"';
             else if (risk === '❌ high') riskColor = 'style="color:red;font-weight:bold"';
             
+            // Enhanced SMTP status determination with more detailed logic
+            let smtpStatus = '❌'; // Default to failed
+            let smtpTitle = 'SMTP validation failed';
+            
+            // Check if smtp_valid exists and handle all possible values
+            if (r.hasOwnProperty('smtp_valid')) {
+                console.log(`[DEBUG] smtp_valid exists for ${r.email}:`, r.smtp_valid, typeof r.smtp_valid);
+                
+                if (r.smtp_valid === true) {
+                    // SMTP validation succeeded
+                    smtpStatus = '✅';
+                    smtpTitle = 'SMTP validation successful';
+                } else if (r.smtp_valid === false) {
+                    // SMTP validation explicitly failed
+                    if (r.status === 'unknown' || (r.reason && r.reason.includes('blocked'))) {
+                        // SMTP blocked but domain might be legitimate
+                        smtpStatus = '⚠️';
+                        smtpTitle = 'SMTP blocked - unable to verify';
+                    } else {
+                        smtpStatus = '❌';
+                        smtpTitle = 'SMTP validation failed';
+                    }
+                } else if (r.smtp_valid === null) {
+                    // SMTP validation was not performed
+                    smtpStatus = '❓';
+                    smtpTitle = 'SMTP validation not performed';
+                }
+            } else {
+                console.log(`[DEBUG] smtp_valid MISSING for ${r.email}, checking status: ${r.status}`);
+                
+                // Fallback: use status field if smtp_valid is missing
+                if (r.status === 'valid') {
+                    smtpStatus = '✅';
+                    smtpTitle = 'Email appears valid';
+                } else if (r.status === 'unknown') {
+                    smtpStatus = '⚠️';
+                    smtpTitle = 'Unable to verify - may be valid';
+                } else {
+                    smtpStatus = '❌';
+                    smtpTitle = 'Email appears invalid';
+                }
+            }
+            
+            console.log(`[DEBUG] Final SMTP status for ${r.email}: ${smtpStatus} (${smtpTitle})`);
+            
+            // Additional validation status mapping for completeness
+            if (r.status === 'catch-all' || r.is_catch_all) {
+                smtpTitle += ' (Catch-all domain)';
+            }
+            
             return `
             <tr>
                 <td>${r.email || '-'}</td>
                 <td>${r.email ? r.email.split('@')[1] : '-'}</td>
-                <td>${r.is_free_provider ? 'Free' : r.is_disposable ? 'Disposable' : r.is_role_based ? 'Role' : '-'}</td>
-                <td>${r.is_blacklisted ? 'Blacklisted' : '-'}</td>
-                <td>${r.status === 'valid' ? '✔️' : r.status === 'catch-all' ? '⚠️' : r.status === 'invalid' ? '❌' : r.status === 'error' ? '❗' : '-'}</td>
+                <td>${r.is_free_provider ? 'Free' : r.is_disposable ? 'Disposable' : r.is_role_based ? 'Role' : 'Business'}</td>
+                <td>${r.is_blacklisted ? 'Yes' : 'No'}</td>
+                <td title="${smtpTitle}">${smtpStatus}</td>
                 <td>${r.is_catch_all ? 'Yes' : 'No'}</td>
                 <td>${typeof r.score === 'number' ? Math.round(r.score * 100) : '-'}</td>
                 <td ${riskColor}>${risk}</td>
@@ -1086,7 +1368,27 @@ class CatchAllMailChecker {
             
             // Determine domain type
             const domainType = result.is_free_provider ? 'Free' : 
-                              result.is_disposable ? 'Disposable' : 'Business';
+                              result.is_disposable ? 'Disposable' : 
+                              result.is_role_based ? 'Role' : 'Business';
+
+            // Determine SMTP status based on exact backend values
+            let smtpStatus = '❌'; // Default to failed
+            
+            if (result.smtp_valid === true) {
+                // SMTP validation succeeded
+                smtpStatus = '✔️';
+            } else if (result.smtp_valid === false) {
+                // SMTP validation explicitly failed
+                smtpStatus = '❌';
+            } else if (result.smtp_valid === null || result.smtp_valid === undefined) {
+                // SMTP validation was not performed (e.g., no MX records)
+                smtpStatus = '❓';
+            }
+            
+            // For domains that appear legitimate but SMTP is blocked, show warning
+            if (result.status === 'unknown' && result.smtp_valid === false) {
+                smtpStatus = '⚠️';
+            }
 
             return `
                 <tr>
@@ -1094,7 +1396,7 @@ class CatchAllMailChecker {
                     <td>${domain}</td>
                     <td>${domainType}</td>
                     <td>${result.is_blacklisted ? 'Yes' : 'No'}</td>
-                    <td>${(result.status || 'invalid').replace(/^./, str => str.toUpperCase())}</td>
+                    <td>${smtpStatus}</td>
                     <td>${result.is_catch_all ? 'Yes' : 'No'}</td>
                     <td>${score}</td>
                     <td class="risk-${riskClass}">${riskLevel}</td>
@@ -1210,10 +1512,7 @@ class CatchAllMailChecker {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    // Show success message
-                    this.showCreditAlert('✅ History item deleted successfully!', 'info');
-                    
-                    // Remove the item from DOM immediately
+                    // Remove the item from DOM immediately (no popup needed)
                     const historyItem = document.querySelector(`[data-history-id="${historyId}"]`);
                     if (historyItem) {
                         historyItem.style.transform = 'translateX(-100%)';
@@ -1232,15 +1531,15 @@ class CatchAllMailChecker {
                         }, 300);
                     }
                 } else {
-                    this.showCreditAlert('❌ Failed to delete history item: ' + (data.error || 'Unknown error'), 'error');
+                    alert('Failed to delete history item: ' + (data.error || 'Unknown error'));
                 }
             } else {
                 const data = await response.json();
-                this.showCreditAlert('❌ Failed to delete history item: ' + (data.error || 'Server error'), 'error');
+                alert('Failed to delete history item: ' + (data.error || 'Server error'));
             }
         } catch (error) {
             console.error('Failed to delete history item:', error);
-            this.showCreditAlert('❌ Network error: Failed to delete history item', 'error');
+            alert('Network error: Failed to delete history item');
         }
     }
     

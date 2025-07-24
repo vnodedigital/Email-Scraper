@@ -22,8 +22,9 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     company_name = models.CharField(max_length=100, blank=True, null=True)
     
-    # Subscription
-    subscription_package = models.CharField(max_length=20, choices=PLAN_CHOICES)
+    # Subscription Packages
+    scraper_package = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
+    verifier_package = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
     subscription_start = models.DateField(blank=True, null=True)
     subscription_end = models.DateField(blank=True, null=True)
     is_trial = models.BooleanField(default=False)
@@ -42,6 +43,7 @@ class UserProfile(models.Model):
     timezone = models.CharField(max_length=50, default='UTC')
     last_reward_claim = models.DateField(blank=True, null=True)  # Track last reward claim date
     claimed_free_package = models.BooleanField(default=False)
+    claimed_free_verifier_package = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"

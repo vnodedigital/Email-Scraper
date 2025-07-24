@@ -10,6 +10,7 @@ class CatchAllMailChecker {
     
     init() {
         this.setupEventListeners();
+        this.setupHistoryEventListeners(); // Set up event listeners for initial Django-rendered buttons
         this.loadHistoryFromDatabase(); // Load from database instead of localStorage
         this.setupTabs();
         this.loadAndDisplayCredits(); // Load credits on initialization
@@ -121,7 +122,7 @@ class CatchAllMailChecker {
                 if (btn) {
                     const idx = btn.getAttribute('data-row-idx');
                     if (idx !== null && this.currentResults[idx]) {
-                        this.showDetailsModal(this.currentResults[idx]);
+                        this.showEmailDetailsModal(this.currentResults[idx]);
                     }
                 }
             });
@@ -383,66 +384,192 @@ class CatchAllMailChecker {
         this.currentResults = [];
         
         const totalEmails = emails.length;
+        let processedEmails = 0;
+        let currentCredits = initialCredits.verify_credits;
+        
         this.updateProgress(0, totalEmails);
         
         try {
-            // Use the new batch verification API
-            console.log('Calling batch verify API with emails:', emails);
-            const response = await fetch('/verifier/api/batch-verify/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                },
-                body: JSON.stringify({
-                    emails: emails,
-                    title: title
-                })
-            });
-
-            console.log('API Response status:', response.status);
-            const data = await response.json();
-            console.log('API Response data:', data);
-
-            if (response.ok && data.success) {
-                // Display results
-                this.currentResults = data.results;
-                this.updateProgress(totalEmails, totalEmails);
-                this.updateResultsDisplay();
+            // Process emails one by one for real-time updates (like in working commit c97be29b)
+            for (let i = 0; i < emails.length; i++) {
+                const email = emails[i];
                 
-                // Update credits display
-                if (data.remaining_credits !== undefined) {
-                    this.displayCredits(data.remaining_credits);
-                }
-
-                // Show success message
-                const summary = data.summary;
-                const successMessage = `✅ Verification Complete!\n\n` +
-                    `📧 Total: ${summary.total}\n` +
-                    `✅ Valid: ${summary.valid}\n` +
-                    `⚠️ Catch-All: ${summary.catchall}\n` +
-                    `❌ Invalid: ${summary.invalid}\n` +
-                    `🎯 Success Rate: ${summary.success_rate}%\n\n` +
-                    `💳 Credits Used: ${data.summary.total}\n` +
-                    `💰 Remaining Credits: ${data.remaining_credits}`;
-                
-                this.showCreditAlert(successMessage, 'info');
-
-                // Refresh history display
-                this.loadHistoryFromDatabase();
-
-            } else {
-                // Handle errors
-                let errorMessage = data.error || 'Verification failed';
-                if (data.current_credits !== undefined) {
-                    errorMessage += `\nCurrent Credits: ${data.current_credits}`;
+                // Check credits before each verification
+                if (currentCredits <= 0) {
+                    this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                    break;
                 }
                 
-                this.showCreditAlert(errorMessage, 'error');
-                
-                // Update credits if available
-                if (data.current_credits !== undefined) {
-                    this.displayCredits(data.current_credits);
+                try {
+                    // Verify single email using the single email API
+                    const response = await fetch('/verifier/api/check-email/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Add successful verification result
+                        const result = {
+                            email: data.email,
+                            status: data.status,
+                            reason: data.reason || '',
+                            is_catch_all: data.is_catch_all || false,
+                            domain: data.domain || email.split('@')[1] || '',
+                            score: data.score || 0,
+                            is_disposable: data.is_disposable || false,
+                            is_free_provider: data.is_free_provider || false,
+                            is_role_based: data.is_role_based || false,
+                            is_blacklisted: data.is_blacklisted || false,
+                            spf: data.spf || '',
+                            dkim: data.dkim || '',
+                            dmarc: data.dmarc || ''
+                        };
+                        
+                        // Attach original row if available
+                        if (this.originalRows && this.originalRows.length) {
+                            const orig = this.originalRows.find(r => r.__email === email);
+                            if (orig) result._original = orig;
+                        }
+                        
+                        this.currentResults.push(result);
+                        processedEmails++;
+                        
+                        // Update credits
+                        if (data.remaining_credits !== undefined) {
+                            currentCredits = data.remaining_credits;
+                            this.displayCredits(currentCredits);
+                            
+                            // Show low credit warning
+                            if (currentCredits <= 10 && currentCredits > 0 && !this.lowCreditWarningShown) {
+                                this.showCreditAlert(`Low credit warning: You have ${currentCredits} credits remaining. Consider purchasing more credits to continue verification.`, 'warning');
+                                this.lowCreditWarningShown = true;
+                            }
+                        }
+                        
+                        // UPDATE DISPLAY IMMEDIATELY after each email (REAL-TIME UPDATES!)
+                        this.updateProgress(processedEmails, totalEmails);
+                        this.updateResultsDisplay();
+                        
+                        // Check if credits are exhausted
+                        if (currentCredits <= 0) {
+                            this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                            break;
+                        }
+                        
+                    } else {
+                        // Handle individual email verification failure
+                        console.error(`Failed to verify ${email}:`, data);
+                        
+                        // Add error result
+                        this.currentResults.push({
+                            email: email,
+                            status: 'error',
+                            reason: data.error || 'Verification failed',
+                            is_catch_all: false,
+                            domain: email.split('@')[1] || '',
+                            score: 0,
+                            is_disposable: false,
+                            is_free_provider: false,
+                            is_role_based: false,
+                            is_blacklisted: false,
+                            spf: '',
+                            dkim: '',
+                            dmarc: ''
+                        });
+                        
+                        processedEmails++;
+                        
+                        // UPDATE DISPLAY IMMEDIATELY even for errors
+                        this.updateProgress(processedEmails, totalEmails);
+                        this.updateResultsDisplay();
+                        
+                        // Update credits if available
+                        if (data.current_credits !== undefined) {
+                            currentCredits = data.current_credits;
+                            this.displayCredits(currentCredits);
+                        }
+                        
+                        // Stop if no credits left
+                        if (data.current_credits === 0) {
+                            this.showCreditAlert('Credits exhausted. Verification stopped.', 'error');
+                            break;
+                        }
+                    }
+                    
+                } catch (error) {
+                    if (error.message.includes('INSUFFICIENT_CREDITS')) {
+                        this.showCreditAlert('Your credits are 0. Email verification has been stopped.', 'error');
+                        break;
+                    }
+                    
+                    // For other errors, add error result and continue
+                    this.currentResults.push({
+                        email: email,
+                        status: 'error',
+                        reason: error.message,
+                        is_catch_all: false,
+                        domain: email.split('@')[1] || '',
+                        score: 0,
+                        is_disposable: false,
+                        is_free_provider: false,
+                        is_role_based: false,
+                        is_blacklisted: false,
+                        spf: '',
+                        dkim: '',
+                        dmarc: ''
+                    });
+                    
+                    processedEmails++;
+                    
+                    // UPDATE DISPLAY IMMEDIATELY even for network errors
+                    this.updateProgress(processedEmails, totalEmails);
+                    this.updateResultsDisplay();
+                }
+            }
+            
+            // Save batch results to history after all emails are processed
+            if (processedEmails > 0) {
+                try {
+                    const response = await fetch('/verifier/api/batch-verify/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: JSON.stringify({
+                            emails: emails.slice(0, processedEmails),
+                            title: title,
+                            precomputed_results: this.currentResults
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        // Show success message
+                        const summary = data.summary;
+                        const successMessage = `✅ Verification Complete!\n\n` +
+                            `📧 Total: ${summary.total}\n` +
+                            `✅ Valid: ${summary.valid}\n` +
+                            `⚠️ Catch-All: ${summary.catchall}\n` +
+                            `❌ Invalid: ${summary.invalid}\n` +
+                            `🎯 Success Rate: ${summary.success_rate}%\n\n` +
+                            `💳 Credits Used: ${summary.total}\n` +
+                            `💰 Remaining Credits: ${currentCredits}`;
+                        
+                        this.showCreditAlert(successMessage, 'info');
+
+                        // Refresh history display
+                        this.loadHistoryFromDatabase();
+                    }
+                } catch (error) {
+                    console.error('Failed to save batch to history:', error);
+                    // Don't show error to user as verification was successful
                 }
             }
             
@@ -453,6 +580,10 @@ class CatchAllMailChecker {
             this.isChecking = false;
             this.showLoading(false);
             this.showProgress(false);
+            
+            // Show Clear All button after verification is complete
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) clearBtn.style.display = 'inline-flex';
         }
     }
     
@@ -579,9 +710,18 @@ class CatchAllMailChecker {
     calculateSummary(results) {
         let valid = 0, invalid = 0, catchAll = 0;
         results.forEach(r => {
-            if (r.is_catch_all) catchAll++;
-            else if (r.status === 'valid') valid++;
-            else invalid++;
+            // Priority: Catch-all detection takes precedence over status
+            const isCatchAll = r.is_catch_all || false;
+            const status = (r.status || 'invalid').toLowerCase();
+            
+            // Apply same priority logic as backend: Catch-all > Valid > Invalid
+            if (isCatchAll || status === 'catch-all') {
+                catchAll++;
+            } else if (status === 'valid') {
+                valid++;
+            } else {
+                invalid++;
+            }
         });
         return { total: results.length, valid, catchAll, invalid };
     }
@@ -624,11 +764,22 @@ class CatchAllMailChecker {
         let filtered = this.currentResults;
         
         if (status !== 'all') {
-            if (status === 'catch-all') {
-                filtered = filtered.filter(r => r.is_catch_all);
-            } else {
-                filtered = filtered.filter(r => r.status === status);
-            }
+            filtered = filtered.filter(r => {
+                // Apply the same priority logic as in calculateSummary
+                const isCatchAll = r.is_catch_all || false;
+                const resultStatus = (r.status || 'invalid').toLowerCase();
+                
+                let effectiveStatus;
+                if (isCatchAll || resultStatus === 'catch-all') {
+                    effectiveStatus = 'catch-all';
+                } else if (resultStatus === 'valid') {
+                    effectiveStatus = 'valid';
+                } else {
+                    effectiveStatus = 'invalid';
+                }
+                
+                return effectiveStatus === status;
+            });
         }
         
         if (search) {
@@ -675,6 +826,11 @@ class CatchAllMailChecker {
         if (resultsTableContainer) resultsTableContainer.style.display = 'none';
         if (resultsSection) resultsSection.style.display = 'none';
         if (clearBtn) clearBtn.style.display = 'none';
+        
+        // Make sure loading overlay is hidden when clearing results
+        this.showLoading(false);
+        this.showProgress(false);
+        this.isChecking = false;
     }
     
     exportResults() {
@@ -708,6 +864,7 @@ class CatchAllMailChecker {
                 method: 'GET',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/json',
                 },
             });
@@ -766,6 +923,9 @@ class CatchAllMailChecker {
                         <button class="btn-export" data-history-id="${item.id}">
                             <i class="fas fa-download"></i> Export
                         </button>
+                        <button class="btn-delete" data-history-id="${item.id}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </div>
                 </div>
             `;
@@ -793,30 +953,53 @@ class CatchAllMailChecker {
                 this.showHistoryExportModal(historyId);
             });
         });
+
+        // Delete buttons
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const historyId = e.target.closest('.btn-delete').dataset.historyId;
+                this.deleteHistoryItem(historyId);
+            });
+        });
     }
 
     async showHistoryDetails(historyId) {
         try {
+            // Get CSRF token more robustly
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                             document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+                             '';
+            
+            console.log('Fetching history details for ID:', historyId);
+            console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+            
             const response = await fetch(`/verifier/history/${historyId}/`, {
                 method: 'GET',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/json',
                 },
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('History data received:', data);
                 const history = data.history;
                 
                 // Show the details modal
                 this.showDetailsModal(history);
             } else {
-                alert('Failed to load history details');
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                alert('Failed to load history details: ' + response.status);
             }
         } catch (error) {
             console.error('Failed to load history details:', error);
-            alert('Failed to load history details');
+            alert('Failed to load history details: ' + error.message);
         }
     }
 
@@ -828,42 +1011,58 @@ class CatchAllMailChecker {
         const tableBody = document.getElementById('detailsTableBody');
         const exportBtn = document.getElementById('exportDetailsBtn');
 
-        if (!modal) return;
+        console.log('Modal elements check:', {
+            modal: !!modal,
+            title: !!title,
+            subtitle: !!subtitle,
+            summary: !!summary,
+            tableBody: !!tableBody,
+            exportBtn: !!exportBtn
+        });
 
-        // Set modal content
-        title.textContent = historyData.title;
-        subtitle.textContent = `${historyData.email_count} emails verified on ${historyData.formatted_date}`;
+        if (!modal) {
+            console.error('Details modal not found');
+            return;
+        }
+
+        // Set modal content with null checks
+        if (title) {
+            title.textContent = historyData.title;
+        }
+        if (subtitle) {
+            subtitle.textContent = `${historyData.email_count} emails verified on ${historyData.formatted_date}`;
+        }
 
         // Set export button data
-        exportBtn.dataset.historyId = historyData.id;
+        if (exportBtn) {
+            exportBtn.dataset.historyId = historyData.id;
+        }
 
         // Create summary stats
-        summary.innerHTML = `
-            <div class="detail-stat">
-                <div class="detail-stat-number">${historyData.email_count}</div>
-                <div class="detail-stat-label">Total Emails</div>
-            </div>
-            <div class="detail-stat">
-                <div class="detail-stat-number" style="color: #16a34a;">${historyData.valid_count}</div>
-                <div class="detail-stat-label">Valid</div>
-            </div>
-            <div class="detail-stat">
-                <div class="detail-stat-number" style="color: #d97706;">${historyData.catchall_count}</div>
-                <div class="detail-stat-label">Catch-All</div>
-            </div>
-            <div class="detail-stat">
-                <div class="detail-stat-number" style="color: #dc2626;">${historyData.invalid_count}</div>
-                <div class="detail-stat-label">Invalid</div>
-            </div>
-            <div class="detail-stat">
-                <div class="detail-stat-number" style="color: #0d9488;">${historyData.success_rate}%</div>
-                <div class="detail-stat-label">Success Rate</div>
-            </div>
-            <div class="detail-stat">
-                <div class="detail-stat-number">${historyData.credits_used}</div>
-                <div class="detail-stat-label">Credits Used</div>
-            </div>
-        `;
+        if (summary) {
+            summary.innerHTML = `
+                <div class="detail-stat">
+                    <div class="detail-stat-number">${historyData.email_count}</div>
+                    <div class="detail-stat-label">Total Emails</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #16a34a;">${historyData.valid_count}</div>
+                    <div class="detail-stat-label">Valid</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #d97706;">${historyData.catchall_count}</div>
+                    <div class="detail-stat-label">Catch-All</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #dc2626;">${historyData.invalid_count}</div>
+                    <div class="detail-stat-label">Invalid</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-number" style="color: #0d9488;">${historyData.success_rate}%</div>
+                    <div class="detail-stat-label">Success Rate</div>
+                </div>
+            `;
+        }
 
         // Populate table with results
         const results = historyData.verified_emails?.results || [];
@@ -882,14 +1081,21 @@ class CatchAllMailChecker {
             const riskLevel = this.getRiskLevelFromScore(score);
             const riskClass = score >= 70 ? 'safe' : score >= 41 ? 'medium' : 'high';
 
+            // Extract domain from email if not available
+            const domain = result.domain || (result.email ? result.email.split('@')[1] : '-');
+            
+            // Determine domain type
+            const domainType = result.is_free_provider ? 'Free' : 
+                              result.is_disposable ? 'Disposable' : 'Business';
+
             return `
                 <tr>
                     <td>${result.email || '-'}</td>
-                    <td>${result.domain || (result.email ? result.email.split('@')[1] : '-')}</td>
-                    <td>${result.domain_type || '-'}</td>
-                    <td>${result.blacklisted ? 'Yes' : 'No'}</td>
-                    <td>${result.smtp_valid ? 'Valid' : 'Invalid'}</td>
-                    <td>${result.catch_all ? 'Yes' : 'No'}</td>
+                    <td>${domain}</td>
+                    <td>${domainType}</td>
+                    <td>${result.is_blacklisted ? 'Yes' : 'No'}</td>
+                    <td>${(result.status || 'invalid').replace(/^./, str => str.toUpperCase())}</td>
+                    <td>${result.is_catch_all ? 'Yes' : 'No'}</td>
                     <td>${score}</td>
                     <td class="risk-${riskClass}">${riskLevel}</td>
                 </tr>
@@ -925,19 +1131,22 @@ class CatchAllMailChecker {
         const searchText = document.getElementById('detailsSearchFilter').value.toLowerCase();
         
         let filteredResults = allResults.filter(result => {
-            // Status filter
+            // Status filter - fix field mapping
             let statusMatch = true;
             if (statusFilter !== 'all') {
-                if (statusFilter === 'valid' && (!result.deliverable || result.catch_all)) statusMatch = false;
-                if (statusFilter === 'catch-all' && !result.catch_all) statusMatch = false;
-                if (statusFilter === 'invalid' && result.deliverable) statusMatch = false;
+                const status = result.status || 'invalid';
+                const isCatchAll = result.is_catch_all || false;
+                
+                if (statusFilter === 'valid' && (status !== 'valid' || isCatchAll)) statusMatch = false;
+                if (statusFilter === 'catch-all' && !isCatchAll) statusMatch = false;
+                if (statusFilter === 'invalid' && status !== 'invalid') statusMatch = false;
             }
 
             // Search filter
             let searchMatch = true;
             if (searchText) {
                 const email = (result.email || '').toLowerCase();
-                const domain = (result.domain || '').toLowerCase();
+                const domain = (result.domain || (result.email ? result.email.split('@')[1] : '')).toLowerCase();
                 searchMatch = email.includes(searchText) || domain.includes(searchText);
             }
 
@@ -961,9 +1170,9 @@ class CatchAllMailChecker {
                     <td>${result.email || '-'}</td>
                     <td>${result.domain || (result.email ? result.email.split('@')[1] : '-')}</td>
                     <td>${result.domain_type || '-'}</td>
-                    <td>${result.blacklisted ? 'Yes' : 'No'}</td>
-                    <td>${result.smtp_valid ? 'Valid' : 'Invalid'}</td>
-                    <td>${result.catch_all ? 'Yes' : 'No'}</td>
+                    <td>${result.is_blacklisted ? 'Yes' : 'No'}</td>
+                    <td>${result.status || 'Invalid'}</td>
+                    <td>${result.is_catch_all ? 'Yes' : 'No'}</td>
                     <td>${score}</td>
                     <td class="risk-${riskClass}">${riskLevel}</td>
                 </tr>
@@ -981,6 +1190,56 @@ class CatchAllMailChecker {
             modal.style.display = 'flex';
         }
     }
+
+    async deleteHistoryItem(historyId) {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to delete this verification history? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/verifier/history/${historyId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Remove the item from DOM immediately (no popup needed)
+                    const historyItem = document.querySelector(`[data-history-id="${historyId}"]`);
+                    if (historyItem) {
+                        historyItem.style.transform = 'translateX(-100%)';
+                        historyItem.style.opacity = '0';
+                        setTimeout(() => {
+                            historyItem.remove();
+                            
+                            // Check if no history items left
+                            const remainingItems = document.querySelectorAll('.history-item');
+                            if (remainingItems.length === 0) {
+                                const historyList = document.getElementById('historyList');
+                                if (historyList) {
+                                    historyList.innerHTML = '<p class="no-history">No checks performed yet</p>';
+                                }
+                            }
+                        }, 300);
+                    }
+                } else {
+                    alert('Failed to delete history item: ' + (data.error || 'Unknown error'));
+                }
+            } else {
+                const data = await response.json();
+                alert('Failed to delete history item: ' + (data.error || 'Server error'));
+            }
+        } catch (error) {
+            console.error('Failed to delete history item:', error);
+            alert('Network error: Failed to delete history item');
+        }
+    }
     
     clearHistory() {
         if (confirm('Are you sure you want to clear all check history? This action cannot be undone.')) {
@@ -994,6 +1253,7 @@ class CatchAllMailChecker {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/json',
                 },
             });
@@ -1099,7 +1359,7 @@ class CatchAllMailChecker {
         }
     }
     
-    showDetailsModal(result) {
+    showEmailDetailsModal(result) {
         const detailsHtml = `
             <h3 style="margin-top:0">Details for: <span style="word-break:break-all">${result.email || '-'}</span></h3>
             <table style="width:100%;border-collapse:collapse;font-size:1em;">

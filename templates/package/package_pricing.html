@@ -1,6 +1,21 @@
 {% extends 'base.html' %}
 {% block body %} 
-<section class="bg-white">
+<!-- Navigation Tabs -->
+<div class="bg-gray-50 border-b">
+  <div class="max-w-screen-xl mx-auto px-4">
+    <nav class="flex space-x-8" aria-label="Tabs">
+      <button onclick="showPackageSection('scraper')" id="scraper-tab" class="package-tab py-4 px-1 border-b-2 border-teal-500 font-medium text-sm text-teal-600">
+        Email Scraper Packages
+      </button>
+      <button onclick="showPackageSection('verifier')" id="verifier-tab" class="package-tab py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+        Email Verifier Packages
+      </button>
+    </nav>
+  </div>
+</div>
+
+<!-- Scraper Packages Section -->
+<section id="scraper-section" class="bg-white package-section">
   <div class="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
       <div class="mx-auto max-w-screen-md text-center mb-8 lg:mb-12">
           <h2 class="mb-4 text-4xl tracking-tight font-extrabold text-teal-600">vNode Email Scraper Packages</h2>
@@ -44,8 +59,8 @@
                             <span>Basic Support</span>
                         </li>
                     </ul>
-                    <a href="{% url 'package:subscription' 'free' %}" class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.subscription_package == 'free' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
-                        {% if user.profile.subscription_package == "free" %} Active {% else %} Get started {% endif %}
+                    <a href="{% url 'package:subscription' 'free' %}" class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.scraper_package == 'free' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                        {% if user.profile.scraper_package == "free" %} Active {% else %} Get started {% endif %}
                     </a>
                     
                 </div>
@@ -85,8 +100,8 @@
                     <span>Basic Support</span>
                 </li>
             </ul>
-            <a class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.subscription_package == 'starter' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
-                {% if user.profile.subscription_package == "starter" %} Active {% else %} Get started {% endif %}
+            <a class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.scraper_package == 'starter' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                {% if user.profile.scraper_package == "starter" %} Active {% else %} Get started {% endif %}
             </a>
               
           </div>
@@ -126,8 +141,8 @@
                     <span>Basic Support</span>
                 </li>
             </ul>
-            <a class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.subscription_package == 'pro' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
-                {% if user.profile.subscription_package == "pro" %} Active {% else %} Get started {% endif %}
+            <a class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.scraper_package == 'pro' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                {% if user.profile.scraper_package == "pro" %} Active {% else %} Get started {% endif %}
             </a>
           </div>
           <!-- Pricing Card -->
@@ -166,12 +181,224 @@
                     <span>Basic Support</span>
                 </li>
             </ul>
-            <a class="text-white bg-teal-600 hover:bg-teal-800 focus:ring-4 focus:ring-teal-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.subscription_package == 'enterprise' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
-                {% if user.profile.subscription_package == "enterprise" %} Active {% else %} Get started {% endif %}
             </a>
           </div>
       </div>
   </div>
 </section>
+
+<!-- Verifier Packages Section -->
+<section id="verifier-section" class="bg-white package-section" style="display: none;">
+  <div class="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
+      <div class="mx-auto max-w-screen-md text-center mb-8 lg:mb-12">
+          <h2 class="mb-4 text-4xl tracking-tight font-extrabold text-blue-600">vNode Email Verifier Packages</h2>
+          <p class="mb-5 font-light text-gray-500 sm:text-xl">Verify email addresses with real-time validation, comprehensive analytics, and professional-grade verification tools. Choose the package that fits your email verification needs.</p>
+      </div>
+      <div class="space-y-8 lg:grid lg:grid-cols-4 sm:gap-6 xl:gap-8 lg:space-y-0">
+
+                  <!-- Pricing Card -->
+                  <div class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-100 shadow xl:p-8">
+                    <h3 class="mb-4 text-2xl font-semibold">Free Trial</h3>
+                    <p class="font-light text-gray-500 sm:text-lg">Best option for <br> trial our Verifier.</p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <span class="mr-2 text-5xl font-extrabold">$0</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <!-- List -->
+                    <ul role="list" class="mb-8 space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>100 Email Verifications</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Real-time Validation</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Basic Analytics</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Export to CSV</span>
+                        </li>
+                    </ul>
+                    <a href="{% url 'package:verifier_subscription' 'free' %}" class="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:ring-blue-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.verifier_package == 'free' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                        {% if user.profile.verifier_package == "free" %} Active {% else %} Get started {% endif %}
+                    </a>
+                </div>
+          
+                  <!-- Pricing Card -->
+                  <div class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-100 shadow xl:p-8">
+                    <h3 class="mb-4 text-2xl font-semibold">Starter</h3>
+                    <p class="font-light text-gray-500 sm:text-lg">Relevant for small <br> business owners.</p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <span class="mr-2 text-5xl font-extrabold">$19</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <!-- List -->
+                    <ul role="list" class="mb-8 space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>5,000 Email Verifications</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Real-time Validation</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Advanced Analytics</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Export to CSV/Excel</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>API Access</span>
+                        </li>
+                    </ul>
+                    <a href="{% url 'package:verifier_subscription' 'starter' %}" class="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:ring-blue-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.verifier_package == 'starter' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                        {% if user.profile.verifier_package == "starter" %} Active {% else %} Get started {% endif %}
+                    </a>
+                </div>
+          
+                  <!-- Pricing Card -->
+                  <div class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-100 shadow xl:p-8">
+                    <h3 class="mb-4 text-2xl font-semibold">Pro</h3>
+                    <p class="font-light text-gray-500 sm:text-lg">Relevant for multiple <br> users, extended & premium support.</p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <span class="mr-2 text-5xl font-extrabold">$49</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <!-- List -->
+                    <ul role="list" class="mb-8 space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>20,000 Email Verifications</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Real-time Validation</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Premium Analytics</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Export to CSV/Excel</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Full API Access</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Priority Support</span>
+                        </li>
+                    </ul>
+                    <a href="{% url 'package:verifier_subscription' 'pro' %}" class="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:ring-blue-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.verifier_package == 'pro' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                        {% if user.profile.verifier_package == "pro" %} Active {% else %} Get started {% endif %}
+                    </a>
+                </div>
+          
+                  <!-- Pricing Card -->
+                  <div class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-100 shadow xl:p-8">
+                    <h3 class="mb-4 text-2xl font-semibold">Enterprise</h3>
+                    <p class="font-light text-gray-500 sm:text-lg">Best for large scale <br> uses and extended redistribution rights.</p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <span class="mr-2 text-5xl font-extrabold">$99</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <!-- List -->
+                    <ul role="list" class="mb-8 space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Unlimited Email Verifications</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Real-time Validation</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Enterprise Analytics</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>All Export Formats</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>Full API Access</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>24/7 Priority Support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                            <span>White-label Options</span>
+                        </li>
+                    </ul>
+                    <a href="{% url 'package:verifier_subscription' 'enterprise' %}" class="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:ring-blue-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center {% if user.profile.verifier_package == 'enterprise' %} opacity-50 cursor-not-allowed pointer-events-none {% endif %}">
+                        {% if user.profile.verifier_package == "enterprise" %} Active {% else %} Get started {% endif %}
+                    </a>
+                </div>
+      </div>
+  </div>
+</section>
+
+<script>
+function showPackageSection(packageType) {
+    // Hide all sections
+    document.querySelectorAll('.package-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Remove active state from all tabs
+    document.querySelectorAll('.package-tab').forEach(tab => {
+        tab.classList.remove('border-teal-500', 'text-teal-600', 'border-blue-500', 'text-blue-600');
+        tab.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected section and activate tab
+    if (packageType === 'scraper') {
+        document.getElementById('scraper-section').style.display = 'block';
+        const tab = document.getElementById('scraper-tab');
+        tab.classList.remove('border-transparent', 'text-gray-500');
+        tab.classList.add('border-teal-500', 'text-teal-600');
+    } else if (packageType === 'verifier') {
+        document.getElementById('verifier-section').style.display = 'block';
+        const tab = document.getElementById('verifier-tab');
+        tab.classList.remove('border-transparent', 'text-gray-500');
+        tab.classList.add('border-blue-500', 'text-blue-600');
+    }
+}
+</script>
 
 {% endblock %}
