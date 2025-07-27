@@ -49,3 +49,9 @@ class ScrapedDataSerializer(serializers.ModelSerializer):
         model = ScrapedFromGoogle
         fields = ['id', 'user', 'keyword', 'country', 'query', 'urls', 'emails', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
+
+class ExportFilterSerializer(serializers.Serializer):
+    """Serializer for export filter parameters"""
+    keyword = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    email = serializers.ChoiceField(choices=['all', 'unique'], default='all')

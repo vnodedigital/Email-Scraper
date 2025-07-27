@@ -13,4 +13,8 @@ urlpatterns = [
     # Data management
     path('api/scraped-data/', api_views.user_scraped_data_api, name='user_scraped_data_api'),
     path('api/scraped-data/<int:pk>/delete/', api_views.delete_scraped_data_api, name='delete_scraped_data_api'),
+    
+    # Export functionality
+    path('api/export/filtered-data/', api_views.export_filtered_data_api, name='export_filtered_data_api'),
+    path('api/export/test-data/', api_views.test_export_data_api, name='test_export_data_api'),
 ]

@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
@@ -12,6 +12,8 @@ import time
 import uuid
 import threading
 from collections import defaultdict
+from openpyxl import Workbook
+from io import BytesIO
 
 from .serializers import (
     SpecificURLScrapingSerializer, 
@@ -19,7 +21,8 @@ from .serializers import (
     GoogleScrapingSerializer,
     YellowPagesScrapingSerializer,
     ScrapingResultSerializer,
-    ScrapedDataSerializer
+    ScrapedDataSerializer,
+    ExportFilterSerializer
 )
 from .scraper.specific_url_scraper import scrape_specific_url
 from .scraper.multi_level_scraper import scrape_multilevel
@@ -307,3 +310,163 @@ def delete_scraped_data_api(request, pk):
         return Response({
             'error': 'Data not found'
         }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def test_export_data_api(request):
+    """API endpoint to check available data for export (for testing)"""
+    try:
+        scraped_results = ScrapedFromGoogle.objects.filter(user=request.user)
+        
+        # Get unique keywords and countries
+        keywords = list(set([result.keyword for result in scraped_results if result.keyword]))
+        countries = list(set([result.country for result in scraped_results if result.country]))
+        
+        # Count total emails
+        total_emails = 0
+        unique_emails = set()
+        for result in scraped_results:
+            if result.emails:
+                total_emails += len(result.emails)
+                unique_emails.update(result.emails)
+        
+        return Response({
+            'success': True,
+            'data': {
+                'total_results': scraped_results.count(),
+                'total_emails': total_emails,
+                'unique_emails': len(unique_emails),
+                'available_keywords': keywords,
+                'available_countries': countries,
+            }
+        })
+        
+    except Exception as e:
+        return Response({
+            'error': f'Failed to get export data info: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def export_filtered_data_api(request):
+    """API endpoint to export filtered scraped data as Excel file"""
+    try:
+        # Validate request data
+        serializer = ExportFilterSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'error': 'Invalid filter parameters',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get validated filter parameters
+        validated_data = serializer.validated_data
+        keyword = validated_data.get("keyword", "")
+        country = validated_data.get("country", "")
+        email_filter = validated_data.get("email", "all")
+
+        print(f"API Export request - Keyword: '{keyword}', Country: '{country}', Filter: '{email_filter}'")
+
+        # Filter data based on the selected values
+        scraped_results = ScrapedFromGoogle.objects.filter(user=request.user)
+        print(f"Initial results count: {scraped_results.count()}")
+        
+        if keyword and keyword.strip():
+            scraped_results = scraped_results.filter(keyword=keyword)
+            print(f"After keyword filter: {scraped_results.count()}")
+
+        if country and country.strip():
+            scraped_results = scraped_results.filter(country=country)
+            print(f"After country filter: {scraped_results.count()}")
+
+        # Prepare email data
+        all_emails = []
+        for result in scraped_results:
+            if result.emails:  # Check if emails field is not None
+                all_emails.extend(result.emails)
+        
+        if email_filter == "unique":
+            emails_to_export = list(set(all_emails))
+        else:
+            emails_to_export = all_emails
+        
+        print(f"Total emails: {len(all_emails)}, Emails to export: {len(emails_to_export)}")
+
+        if not emails_to_export:
+            return Response({
+                'error': 'No emails found with the selected filters.',
+                'total_emails': 0,
+                'filters_applied': {
+                    'keyword': keyword,
+                    'country': country,
+                    'email_filter': email_filter
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Create Excel file in memory
+        output = BytesIO()
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Filtered Data"
+
+        # Add headers
+        sheet.append(["Keyword", "Country", "Email", "Scraped Date"])
+
+        # Add data rows
+        if email_filter == "unique":
+            for email in emails_to_export:
+                # Find the first result that contains this email
+                for result in scraped_results:
+                    if result.emails and email in result.emails:
+                        sheet.append([
+                            result.keyword, 
+                            result.country, 
+                            email,
+                            result.scraped_at.strftime('%Y-%m-%d %H:%M')
+                        ])
+                        break
+        else:
+            for result in scraped_results:
+                if result.emails:  # Check if emails field is not None
+                    for email in result.emails:
+                        sheet.append([
+                            result.keyword, 
+                            result.country, 
+                            email,
+                            result.scraped_at.strftime('%Y-%m-%d %H:%M')
+                        ])
+
+        # Save workbook to BytesIO
+        workbook.save(output)
+        output.seek(0)
+
+        # Prepare filename
+        parts = []
+        if keyword and keyword.strip():
+            parts.append(keyword.replace(" ", "_"))
+        if country and country.strip():
+            parts.append(country.replace(" ", "_"))
+        parts.append(email_filter)
+        
+        filename = "_".join(parts) + ".xlsx" if parts else "filtered_data.xlsx"
+        print(f"Generated filename: {filename}")
+
+        # Create HTTP response
+        response = HttpResponse(
+            output.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        
+        print(f"Excel file created successfully. Size: {len(output.getvalue())} bytes")
+        
+        return response
+        
+    except Exception as e:
+        print(f"API Export error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({
+            'error': f'Export failed: {str(e)}',
+            'type': 'server_error'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

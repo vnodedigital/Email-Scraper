@@ -27,6 +27,7 @@ from datetime import timedelta
 from django.http import HttpResponse
 import csv
 from openpyxl import Workbook
+from io import BytesIO
 
 
 def claim_daily_reward(request):
@@ -380,48 +381,96 @@ def reset_password(request, uidb64, token):
 @login_required
 def export_filtered_data(request):
     if request.method == "POST":
-        keyword = request.POST.get("keyword", "")
-        country = request.POST.get("country", "")
-        email_filter = request.POST.get("email", "")
+        try:
+            keyword = request.POST.get("keyword", "")
+            country = request.POST.get("country", "")
+            email_filter = request.POST.get("email", "")
 
-        # Filter data based on the selected values
-        scraped_results = ScrapedFromGoogle.objects.filter(user=request.user)
-        if keyword != "":
-            scraped_results = scraped_results.filter(keyword=keyword)
+            print(f"Export request - Keyword: '{keyword}', Country: '{country}', Filter: '{email_filter}'")
 
-        if country != "":
-            scraped_results = scraped_results.filter(country=country)
+            # Filter data based on the selected values
+            scraped_results = ScrapedFromGoogle.objects.filter(user=request.user)
+            print(f"Initial results count: {scraped_results.count()}")
+            
+            if keyword and keyword.strip():
+                scraped_results = scraped_results.filter(keyword=keyword)
+                print(f"After keyword filter: {scraped_results.count()}")
 
+            if country and country.strip():
+                scraped_results = scraped_results.filter(country=country)
+                print(f"After country filter: {scraped_results.count()}")
 
-        # Prepare email data
-        all_emails = [email for result in scraped_results for email in result.emails]
-        unique_emails = list(set(all_emails)) if email_filter == "unique" else all_emails
-
-        # Create Excel file
-        workbook = Workbook()
-        sheet = workbook.active
-        sheet.title = "Filtered Data"
-
-        # Add headers
-        sheet.append(["Keyword", "Country", "Email"])
-
-        # Add data rows
-        if email_filter == "unique":
-            for email in unique_emails:
-                for result in scraped_results:
-                    if email in result.emails:
-                        sheet.append([result.keyword, result.country, email])
-                        break
-        else:
+            # Prepare email data
+            all_emails = []
             for result in scraped_results:
-                for email in result.emails:
-                    sheet.append([result.keyword, result.country, email])
+                all_emails.extend(result.emails)
+            
+            if email_filter == "unique":
+                unique_emails = list(set(all_emails))
+                emails_to_export = unique_emails
+            else:
+                emails_to_export = all_emails
+            
+            print(f"Total emails: {len(all_emails)}, Emails to export: {len(emails_to_export)}")
 
-        # Prepare response
-        filename = f"{keyword}_{country}_{email_filter}.xlsx" if keyword or country else "filtered_data.xlsx"
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        response["Content-Disposition"] = 'attachment; filename="{}"'.format(filename)
-        workbook.save(response)
-        return response
+            if not emails_to_export:
+                messages.warning(request, "No emails found with the selected filters.")
+                return redirect("accounts:dashboard")
 
-    return redirect("user_profile")
+            # Create Excel file in memory
+            output = BytesIO()
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.title = "Filtered Data"
+
+            # Add headers
+            sheet.append(["Keyword", "Country", "Email"])
+
+            # Add data rows
+            if email_filter == "unique":
+                for email in emails_to_export:
+                    # Find the first result that contains this email
+                    for result in scraped_results:
+                        if email in result.emails:
+                            sheet.append([result.keyword, result.country, email])
+                            break
+            else:
+                for result in scraped_results:
+                    for email in result.emails:
+                        sheet.append([result.keyword, result.country, email])
+
+            # Save workbook to BytesIO
+            workbook.save(output)
+            output.seek(0)
+
+            # Prepare filename
+            parts = []
+            if keyword and keyword.strip():
+                parts.append(keyword.replace(" ", "_"))
+            if country and country.strip():
+                parts.append(country.replace(" ", "_"))
+            parts.append(email_filter)
+            
+            filename = "_".join(parts) + ".xlsx" if parts else "filtered_data.xlsx"
+            print(f"Generated filename: {filename}")
+
+            # Create HTTP response
+            response = HttpResponse(
+                output.getvalue(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            
+            print(f"Excel file created successfully. Size: {len(output.getvalue())} bytes")
+            
+            return response
+            
+        except Exception as e:
+            print(f"Export error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            messages.error(request, f"Export failed: {str(e)}")
+            return redirect("accounts:dashboard")
+    else:
+        print("Export accessed via GET request - redirecting to dashboard")
+        return redirect("accounts:dashboard")
