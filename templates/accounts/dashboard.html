@@ -427,73 +427,277 @@
         animation: fadeInUp 0.6s ease forwards;
     }
 
-    /* Modal Styles - Updated */
+    /* Professional Modal Styles */
     .modal {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1000;
+        padding: 1rem;
+        opacity: 1;
+        visibility: visible;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .modal.hidden {
+        opacity: 0;
+        visibility: hidden;
         display: none !important;
     }
 
     .modal-content {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(15px);
-        border-radius: 20px;
-        width: 90%;
-        max-width: 800px;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 85vh;
+        overflow: hidden;
+        box-shadow: 
+            0 25px 80px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        transform: scale(1);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-content::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #0d9488, #14b8a6, #3b82f6);
+        border-radius: 24px 24px 0 0;
     }
 
     .modal-header {
-        padding: 1.5rem;
-        border-bottom: 2px solid rgba(13, 148, 136, 0.1);
-        background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(59, 130, 246, 0.1));
-        border-radius: 20px 20px 0 0;
+        padding: 2rem 2.5rem;
+        border-bottom: none;
+        background: linear-gradient(135deg, 
+            rgba(13, 148, 136, 0.05), 
+            rgba(59, 130, 246, 0.05),
+            rgba(255, 255, 255, 0.1)
+        );
+        border-radius: 24px 24px 0 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .modal-header h5 {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
         font-weight: 700;
         color: #1e293b;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modal-header h5::before {
+        content: '📧';
+        font-size: 1.5rem;
+        opacity: 0.8;
+    }
+
+    .close-button {
+        background: rgba(239, 68, 68, 0.1);
+        border: 2px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .close-button:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
 
     .modal-body {
-        padding: 2rem;
+        padding: 2.5rem;
+        overflow-y: auto;
+        max-height: calc(85vh - 200px);
+    }
+
+    .modal-body h6 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #374151;
+        margin: 2rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(13, 148, 136, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .modal-body h6:first-of-type {
+        margin-top: 1rem;
+    }
+
+    .modal-body h6::before {
+        content: '✉️';
+        font-size: 1rem;
+    }
+
+    .modal-body h6:last-of-type::before {
+        content: '🔗';
+    }
+
+    .modal-body p {
+        font-size: 1.1rem;
+        color: #4b5563;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: rgba(13, 148, 136, 0.05);
+        border-radius: 12px;
+        border-left: 4px solid #0d9488;
+    }
+
+    .modal-body p strong {
+        color: #0d9488;
+        font-weight: 700;
+    }
+
+    /* Enhanced table styles for modal */
+    .modal-body .results-table {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
+    }
+
+    .modal-body .results-table thead {
+        background: linear-gradient(135deg, #0d9488, #14b8a6);
+    }
+
+    .modal-body .results-table th {
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+    }
+
+    .modal-body .results-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .modal-body .results-table tbody tr:hover {
+        background: rgba(13, 148, 136, 0.05);
+    }
+
+    /* URL list styling */
+    .modal-body ol {
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .modal-body ol li {
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .modal-body ol li:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-body ol li a {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .modal-body ol li a:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
     }
 
     .modal-footer {
-        padding: 1.5rem;
+        padding: 2rem 2.5rem;
         border-top: 2px solid rgba(13, 148, 136, 0.1);
         text-align: right;
-        border-radius: 0 0 20px 20px;
+        border-radius: 0 0 24px 24px;
+        background: linear-gradient(135deg, 
+            rgba(248, 250, 252, 0.9), 
+            rgba(241, 245, 249, 0.9)
+        );
     }
 
     .close-btn {
         background: linear-gradient(135deg, #6b7280, #4b5563);
         color: white;
         border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 10px;
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
     }
 
     .close-btn:hover {
         background: linear-gradient(135deg, #4b5563, #374151);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+    }
+
+    /* Empty state styling */
+    .text-gray-500 {
+        color: #6b7280 !important;
+        font-style: italic;
+        text-align: center;
+        padding: 2rem;
+        background: rgba(107, 114, 128, 0.05);
+        border-radius: 12px;
+        border: 2px dashed rgba(107, 114, 128, 0.2);
+    }
+
+    /* Modal animation */
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .modal:not(.hidden) .modal-content {
+        animation: modalFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     /* Pagination Styles */
@@ -690,48 +894,50 @@
   <div id="emailModal{{ result.id }}" class="modal hidden">
     <div class="modal-content">
       <!-- Modal Header -->
-      <div class="flex justify-between items-center p-4 border-b border-teal-800 sticky top-0 bg-white z-10">
-        <h5 class="text-lg font-semibold">ðŸ“§ Emails for "{{ result.keyword }}"</h5>
-        <button onclick="closeModal('{{ result.id }}')" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+      <div class="modal-header">
+        <h5>Emails for "{{ result.keyword }}"</h5>
+        <button onclick="closeModal('{{ result.id }}')" class="close-button">
+          ×
         </button>
       </div>
 
       <!-- Modal Body -->
       <div class="modal-body">
         <p><strong>Country:</strong> {{ result.country }}</p>
-        <h6>Emails</h6>
+        <h6>Email Addresses</h6>
         {% if result.emails %}
         <div class="overflow-x-auto">
-        <table class="results-table" id="email-table{{ result.id }}">
-            <thead class="bg-gray-100">
+          <table class="results-table" id="email-table{{ result.id }}">
+            <thead>
               <tr>
-                <th class="px-4 py-2 border border-gray-300">#</th>
-                <th class="px-4 py-2 border border-gray-300">Email</th>
+                <th>#</th>
+                <th>Email Address</th>
               </tr>
             </thead>
             <tbody>
               {% for email in result.emails %}
               <tr>
-                <td class="px-4 py-2 border border-gray-300">{{ forloop.counter }}</td>
-                <td class="px-4 py-2 border border-gray-300">{{ email }}</td>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ email }}</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
         {% else %}
-        <p class="text-gray-500">No emails found.</p>
+        <p class="text-gray-500">No emails found for this search.</p>
         {% endif %}
 
-        <h6 class="mt-4">URLs</h6>
-        <ol class="list-decimal pl-5">
+        <h6>Source URLs</h6>
+        {% if result.urls %}
+        <ol>
           {% for url in result.urls %}
-          <li><a href="{{ url }}" target="_blank" class="text-blue-500 hover:underline">{{ url }}</a></li>
+          <li><a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></li>
           {% endfor %}
         </ol>
+        {% else %}
+        <p class="text-gray-500">No URLs available.</p>
+        {% endif %}
       </div>
 
       <!-- Modal Footer -->
