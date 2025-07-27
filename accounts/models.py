@@ -25,9 +25,16 @@ class UserProfile(models.Model):
     # Subscription Packages
     scraper_package = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
     verifier_package = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
+    
+    # Scraper Subscription Tracking
     subscription_start = models.DateField(blank=True, null=True)
     subscription_end = models.DateField(blank=True, null=True)
     is_trial = models.BooleanField(default=False)
+    
+    # Verifier Subscription Tracking
+    verifier_subscription_start = models.DateField(blank=True, null=True)
+    verifier_subscription_end = models.DateField(blank=True, null=True)
+    verifier_is_trial = models.BooleanField(default=False)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     verification_token = models.CharField(max_length=256, blank=True, null=True)

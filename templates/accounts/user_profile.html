@@ -172,7 +172,7 @@
     }
 
     .profile-label {
-        font-weight: 600;
+        font-weight: 500;
         color: #374151;
         display: flex;
         align-items: center;
@@ -444,7 +444,7 @@
                 <li class="profile-item">
                     <span class="profile-label">
                         <i class="fas fa-calendar-alt"></i>
-                        <strong>Subscription Status:</strong>
+                        <strong>Scraper Subscription:</strong>
                     </span>
                     <span class="profile-value">
                         {% if profile.subscription_end and profile.subscription_end >= today %}
@@ -459,6 +459,35 @@
                                 Expired {{ profile.subscription_end|date:"M d, Y" }}
                             </span>
                             <small class="text-gray-500 block mt-1">(Expired {{ profile.subscription_end|timesince:today }} ago)</small>
+                        {% else %}
+                            <span class="status-badge status-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                No subscription data
+                            </span>
+                        {% endif %}
+                    </span>
+                </li>
+                
+                <li class="profile-item">
+                    <span class="profile-label">
+                        <i class="fas fa-calendar-check"></i>
+                        <strong>Verifier Subscription:</strong>
+                    </span>
+                    <span class="profile-value">
+                        {% if profile.verifier_subscription_end and profile.verifier_subscription_end >= today %}
+                            <span class="status-badge status-active">
+                                <i class="fas fa-check-circle"></i>
+                                Active until {{ profile.verifier_subscription_end|date:"M d, Y" }}
+                            </span>
+                            {% with days_remaining=profile.verifier_subscription_end|timeuntil:today %}
+                                <small class="text-gray-500 block mt-1">({{ days_remaining }} remaining)</small>
+                            {% endwith %}
+                        {% elif profile.verifier_subscription_end %}
+                            <span class="status-badge status-expired">
+                                <i class="fas fa-times-circle"></i>
+                                Expired {{ profile.verifier_subscription_end|date:"M d, Y" }}
+                            </span>
+                            <small class="text-gray-500 block mt-1">(Expired {{ profile.verifier_subscription_end|timesince:today }} ago)</small>
                         {% else %}
                             <span class="status-badge status-warning">
                                 <i class="fas fa-exclamation-triangle"></i>

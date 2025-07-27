@@ -1,43 +1,394 @@
-<!-- templates/edit_profile.html -->
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<title>Edit Profile - Email Scraper & Verifier</title>
+<meta name="description" content="Edit your profile and account settings">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    /* Reset and Base Styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    /* Professional Dashboard Layout */
+    .edit-profile-dashboard {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .edit-profile-dashboard::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 25% 25%, rgba(13, 148, 136, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .edit-profile-container {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    /* Professional Header */
+    .edit-profile-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .edit-profile-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .edit-profile-header h1 i {
+        color: #0d9488;
+    }
+
+    .edit-profile-header h1 .title-text {
+        background: linear-gradient(135deg, #0d9488, #3b82f6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .edit-profile-header p {
+        font-size: 1.1rem;
+        color: #64748b;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* Professional Form Card */
+    .edit-profile-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 2.5rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .edit-profile-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #0d9488, #14b8a6);
+        opacity: 1;
+    }
+
+    .edit-profile-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        border-color: rgba(13, 148, 136, 0.3);
+    }
+
+    /* Card Header */
+    .card-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid rgba(13, 148, 136, 0.1);
+    }
+
+    .card-header h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .card-header i {
+        color: #0d9488;
+        font-size: 1.5rem;
+    }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: #0d9488;
+        width: 16px;
+        text-align: center;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid rgba(226, 232, 240, 0.8);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #0d9488;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .form-input:hover {
+        border-color: rgba(13, 148, 136, 0.5);
+    }
+
+    /* Required field indicator */
+    .required::after {
+        content: ' *';
+        color: #ef4444;
+        font-weight: bold;
+    }
+
+    /* Professional Button */
+    .save-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        background: linear-gradient(135deg, #0d9488, #14b8a6);
+        color: white;
+        box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 1rem;
+    }
+
+    .save-btn:hover {
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+    }
+
+    .save-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+        border: 2px solid rgba(107, 114, 128, 0.2);
+        margin-bottom: 1rem;
+    }
+
+    .back-btn:hover {
+        background: rgba(107, 114, 128, 0.2);
+        color: #4b5563;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .edit-profile-container {
+            padding: 0 1rem;
+        }
+
+        .edit-profile-header h1 {
+            font-size: 2rem;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .edit-profile-card {
+            padding: 1.5rem;
+        }
+
+        .card-header h3 {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+
+    /* Smooth Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .edit-profile-card {
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-grid-full {
+        grid-column: 1 / -1;
+    }
+</style>
+{% endblock %}
 
 {% block body %}
-<div style="min-height: 80vh;" class="container mx-auto mt-10">  
-    <div class=" mt-10 p-6 bg-white shadow-md rounded-lg max-w-4xl text-align-center mx-auto">
-        <h2 class="text-2xl font-bold mb-6">Edit Profile</h2>
-        <form method="POST" class="space-y-4">
-          {% csrf_token %}
-      
-          <div>
-            <label class="block text-gray-700">First Name</label>
-            <input type="text" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-teal-600 focus:ring-teal-600 focus:ring-1" required>
-          </div>
-      
-          <div>
-            <label class="block text-gray-700">Last Name</label>
-            <input type="text" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-teal-600 focus:ring-teal-600 focus:ring-1" required>
-          </div>
-      
-          <div>
-            <label class="block text-gray-700">Email</label>
-            <input type="email" name="email" value="{{ user.email }}" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-teal-600 focus:ring-teal-600 focus:ring-1" required>
-          </div>
-      
-          <div>
-            <label class="block text-gray-700">Company Name</label>
-            <input type="text" name="company_name" value="{{ profile.company_name }}" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-teal-600 focus:ring-teal-600 focus:ring-1">
-          </div>
-      
-          <div>
-            <label class="block text-gray-700">Phone Number</label>
-            <input type="text" name="phone_number" value="{{ profile.phone_number }}" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-teal-600 focus:ring-teal-600 focus:ring-1">
-          </div>
-      
-          <button type="submit" class="bg-teal-600 hover:bg-teal-800 text-white font-semibold rounded" style="padding: 10px 15px;">
-            Save Changes
-          </button>
-        </form>
-      </div> 
-</div>
+<!-- Professional Edit Profile Dashboard -->
+<div class="edit-profile-dashboard">
+    <div class="edit-profile-container">
+        
+        <!-- Professional Header -->
+        <div class="edit-profile-header">
+            <h1>
+                <i class="fas fa-user-edit"></i>
+                <span class="title-text">Edit Profile</span>
+            </h1>
+            <p>Update your account information and personal details to keep your profile current.</p>
+        </div>
 
+        <!-- Back to Profile Button -->
+        <a href="{% url 'accounts:user_profile' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Profile
+        </a>
+
+        <!-- Professional Edit Profile Card -->
+        <div class="edit-profile-card">
+            <div class="card-header">
+                <h3>
+                    <i class="fas fa-user-cog"></i>
+                    Account Information
+                </h3>
+            </div>
+            
+            <form method="POST" class="form-container">
+                {% csrf_token %}
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-user"></i>
+                            First Name
+                        </label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-user"></i>
+                            Last Name
+                        </label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group form-grid-full">
+                        <label class="form-label required">
+                            <i class="fas fa-envelope"></i>
+                            Email Address
+                        </label>
+                        <input type="email" name="email" value="{{ user.email }}" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-building"></i>
+                            Company Name
+                        </label>
+                        <input type="text" name="company_name" value="{{ profile.company_name }}" class="form-input" placeholder="Enter your company name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-phone"></i>
+                            Phone Number
+                        </label>
+                        <input type="text" name="phone_number" value="{{ profile.phone_number }}" class="form-input" placeholder="Enter your phone number">
+                    </div>
+                </div>
+                
+                <button type="submit" class="save-btn">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
