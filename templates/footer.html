@@ -1,6 +1,154 @@
-<footer>
-<div class="text-center p-4" style="background-color: rgba(0, 0, 0, 0.05);">
-    © 2021 Copyright:
-    <a class="text-reset fw-bold" href="https://mdbootstrap.com/">MDBootstrap.com</a>
+<footer class="footer-global">
+  <div class="footer-main">
+    <div class="footer-col about">
+      <img src="/media/logo.png" alt="vNode Digital Logo" class="footer-logo">
+      <div class="footer-title">vNode Digital</div>
+      <p class="footer-desc">Powerful tools for email scraping, verification, and business contact discovery. Trusted worldwide for accuracy and privacy.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-heading">Quick Links</div>
+      <a href="/" class="footer-link">Home</a>
+      <a href="{% url 'scraper:professional_scraper' %}" class="footer-link">Scraper</a>
+      <a href="{% url 'verifier:verify_emails' %}" class="footer-link">Verifier</a>
+      <a href="{% url 'package:package' %}" class="footer-link">Pricing</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-heading">Legal</div>
+      <a href="/privacy/" class="footer-link">Privacy Policy</a>
+      <a href="/terms/" class="footer-link">Terms of Service</a>
+      <a href="/gdpr/" class="footer-link">GDPR</a>
+      <a href="/cookie-policy/" class="footer-link">Cookie Policy</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-heading">Contact</div>
+      <a href="mailto:info@vnodedigital.com" class="footer-link"><i class="fas fa-envelope"></i> info@vnodedigital.com</a>
+      <a href="tel:+880123456789" class="footer-link"><i class="fas fa-phone"></i> +880 1234-56789</a>
+      <div class="footer-social">
+        <a href="https://facebook.com/" target="_blank" class="footer-social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://twitter.com/" target="_blank" class="footer-social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="https://linkedin.com/" target="_blank" class="footer-social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        <a href="https://github.com/" target="_blank" class="footer-social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+    </div>
   </div>
-  </footer>
+  <div class="footer-bottom">
+    <span>&copy; 2021â€“2025 vNode Digital. All rights reserved.</span>
+    <span class="footer-madeby">Made with <i class="fas fa-heart" style="color:#e53e3e;"></i> by vNode Team</span>
+  </div>
+</footer>
+
+<style>
+.footer-global {
+  width: 100%;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 16px rgba(44,62,80,0.08);
+  border-top: 1.5px solid rgba(92,189,170,0.13);
+  font-family: 'Roboto', sans-serif;
+  margin-top: 3rem;
+  color: #25636a;
+}
+.footer-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.2rem 2rem 0.5rem 2rem;
+  gap: 2.5rem;
+}
+.footer-col {
+  min-width: 180px;
+  flex: 1 1 180px;
+  margin-bottom: 1.5rem;
+}
+.footer-col.about {
+  flex: 2 1 260px;
+  min-width: 220px;
+}
+.footer-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px #5cbdaa22;
+  background: #fff;
+  margin-bottom: 0.5rem;
+}
+.footer-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #25636a;
+  letter-spacing: 1px;
+  margin-bottom: 0.3rem;
+}
+.footer-desc {
+  color: #64748b;
+  font-size: 1rem;
+  margin-bottom: 0.7rem;
+}
+.footer-heading {
+  font-size: 1.08rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+  color: #25636a;
+}
+.footer-link {
+  display: block;
+  color: #25636a;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+  transition: color 0.2s;
+}
+.footer-link:hover {
+  color: #5cbdaa;
+  text-decoration: underline;
+}
+.footer-social {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.7rem;
+}
+.footer-social-link {
+  color: #25636a;
+  font-size: 1.2rem;
+  transition: color 0.2s, transform 0.2s;
+}
+.footer-social-link:hover {
+  color: #5cbdaa;
+  transform: scale(1.15);
+}
+.footer-bottom {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.98rem;
+  padding: 0.7rem 1rem 1.1rem 1rem;
+  background: #f5f6fa;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.footer-madeby {
+  font-size: 0.95em;
+  color: #5cbdaa;
+  font-weight: 500;
+}
+.footer-country {
+  font-size: 0.93em;
+  color: #25636a;
+  margin-top: 0.1rem;
+}
+@media (max-width: 900px) {
+  .footer-main {
+    flex-direction: column;
+    gap: 1.2rem;
+    align-items: flex-start;
+    padding: 1.2rem 1rem 0.5rem 1rem;
+  }
+  .footer-col {
+    min-width: 0;
+    width: 100%;
+  }
+}
+</style>
