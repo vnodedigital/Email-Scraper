@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {{ page.title }}
+{% endblock %}
+
+
+{% block body %}
+<div class="page-container">
+    <h1 class="page-title">{{ page.title }}</h1>
+    <div>{{ page.content|safe }}</div>
+</div>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #0d9488 !important;
+      text-align: center;
+    }
+
+    .page-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 40px 20px;
+      background-color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+    }
+
+    .page-container h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      color: #222;
+    }
+
+    .page-container div {
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    /* Tablet */
+    @media (max-width: 991px) {
+      .page-container {
+        padding: 30px 15px;
+      }
+
+      .page-container h1 {
+        font-size: 2rem;
+      }
+
+      .page-container div {
+        font-size: 1rem;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 576px) {
+      .page-container {
+        padding: 20px 10px;
+      }
+
+      .page-container h1 {
+        font-size: 1.5rem;
+        text-align: center;
+      }
+
+      .page-container div {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+{% endblock %}

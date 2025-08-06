@@ -14,10 +14,12 @@
     </div>
     <div class="footer-col">
       <div class="footer-heading">Legal</div>
-      <a href="/privacy/" class="footer-link">Privacy Policy</a>
-      <a href="/terms/" class="footer-link">Terms of Service</a>
-      <a href="/gdpr/" class="footer-link">GDPR</a>
-      <a href="/cookie-policy/" class="footer-link">Cookie Policy</a>
+      {% if footer_pages %}
+        {% for page in footer_pages %}
+          <a href="{% url 'page_view' slug=page.slug %}" class="footer-link">{{ page.title }}</a>
+        {% endfor %}
+      {% endif %}
+      
     </div>
     <div class="footer-col">
       <div class="footer-heading">Contact</div>

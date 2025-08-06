@@ -1,3 +1,29 @@
+# CKEditor config
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_IMAGE_BACKEND = "pillow"
+
+CKEDITOR_CONFIGS = {
+    'full_toolbar': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        'toolbar_Full': [
+            ['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print', '-', 'Templates'],
+            ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
+            ['Find', 'Replace', '-', 'SelectAll', '-', 'SpellChecker', 'Scayt'],
+            ['Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField'],
+            '/',
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-', 'BidiLtr', 'BidiRtl'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe'],
+            '/',
+            ['Styles', 'Format', 'Font', 'FontSize'],
+            ['TextColor', 'BGColor'],
+            ['Maximize', 'ShowBlocks', '-', 'About']
+        ],
+    }
+}
 """
 Django settings for scraper_project project.
 
@@ -54,6 +80,8 @@ INSTALLED_APPS = [
     'scraper',
     'package',
     'verifier',
+    'page',
+    'ckeditor',
     'scrapy_playwright',
     'tailwind',
     'theme',
@@ -88,6 +116,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'accounts.context_processors.today_context',  # Update the path based on your app structure
                 'sme_ai.settings.debug_context_processor', #tailwindcss
+                'page.context_processors.footer_pages',  # Add this line to include the footer pages context processor
             ],
         },
     },
