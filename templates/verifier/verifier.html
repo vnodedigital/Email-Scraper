@@ -1463,6 +1463,7 @@
     
     <!-- Load JavaScript -->
     <script src="{% static 'js/mailChecker.js' %}?v=1753261800"></script>
+    <script src="{% static 'js/mailChecker_fix.js' %}?v={{ request.META.REQUEST_TIME|default:'1' }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <!-- Particle Animation Script -->

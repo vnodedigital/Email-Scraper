@@ -88,15 +88,26 @@ def user_profile(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     today = date.today()
 
-    # Calculate remaining days
-    remaining_days = None
+    # Calculate remaining days for scraper subscription
+    scraper_remaining_days = None
     if profile.subscription_end:
-        remaining_days = (profile.subscription_end - today).days
+        scraper_remaining_days = (profile.subscription_end - today).days
+        if scraper_remaining_days < 0:
+            scraper_remaining_days = 0
+
+    # Calculate remaining days for verifier subscription
+    verifier_remaining_days = None
+    if profile.verifier_subscription_end:
+        verifier_remaining_days = (profile.verifier_subscription_end - today).days
+        if verifier_remaining_days < 0:
+            verifier_remaining_days = 0
 
     return render(request, 'accounts/user_profile.html', {
         'profile': profile,
         'today': today,
-        'remaining_days': remaining_days,
+        'remaining_days': scraper_remaining_days,  # For backwards compatibility
+        'scraper_remaining_days': scraper_remaining_days,
+        'verifier_remaining_days': verifier_remaining_days,
     })
 
 

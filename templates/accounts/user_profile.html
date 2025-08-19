@@ -237,6 +237,12 @@
         color: white;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
+    
+    .verifier-badge.credits-high {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
 
     .credits-low {
         background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -274,6 +280,376 @@
         color: white;
     }
 
+    /* Subscription Packages Section */
+    .subscription-section {
+        margin-top: 3rem;
+    }
+
+    .subscription-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .subscription-header h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #0d9488, #3b82f6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+
+    .subscription-header p {
+        color: #64748b;
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .subscription-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+
+    .subscription-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .subscription-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .subscription-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+    }
+
+    .scraper-card::before {
+        background: linear-gradient(90deg, #0d9488, #14b8a6);
+    }
+
+    .verifier-card::before {
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+    }
+
+    .subscription-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        position: relative;
+    }
+
+    .scraper-icon {
+        background: linear-gradient(135deg, rgba(13, 148, 136, 0.2), rgba(20, 184, 166, 0.2));
+        border: 2px solid rgba(13, 148, 136, 0.3);
+    }
+
+    .verifier-icon {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2));
+        border: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .subscription-icon i {
+        font-size: 2.5rem;
+    }
+
+    .scraper-icon i {
+        color: #0d9488;
+    }
+
+    .verifier-icon i {
+        color: #3b82f6;
+    }
+
+    .subscription-title {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .subscription-title h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .scraper-title h3 {
+        color: #0d9488;
+    }
+
+    .verifier-title h3 {
+        color: #3b82f6;
+    }
+
+    .subscription-title p {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .subscription-details {
+        flex-grow: 1;
+        background: rgba(248, 250, 252, 0.7);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .subscription-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+    }
+
+    .subscription-item:last-child {
+        border-bottom: none;
+    }
+
+    .subscription-item i {
+        width: 22px;
+        text-align: center;
+        font-size: 1rem;
+    }
+
+    .scraper-item i {
+        color: #0d9488;
+    }
+
+    .verifier-item i {
+        color: #3b82f6;
+    }
+
+    .subscription-value {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #334155;
+    }
+
+    .subscription-label {
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: block;
+    }
+
+    .subscription-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .subscription-btn {
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-scraper {
+        background: linear-gradient(135deg, #0d9488, #14b8a6);
+    }
+
+    .btn-scraper:hover {
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+    }
+
+    .btn-verifier {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    .btn-verifier:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    }
+
+    .btn-secondary {
+        background: transparent;
+        border: 2px solid #cbd5e0;
+        color: #64748b;
+    }
+
+    .btn-secondary:hover {
+        border-color: #94a3b8;
+        color: #475569;
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .credits-counter {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .credits-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .credits-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #64748b;
+    }
+
+    .credits-count {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .credits-high .credits-count {
+        color: #059669;
+    }
+    
+    .verifier-credits.credits-high .credits-count {
+        color: #3b82f6;
+    }
+
+    .credits-low .credits-count {
+        color: #dc2626;
+    }
+
+    .credits-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .scraper-credits .credits-icon {
+        background: rgba(13, 148, 136, 0.1);
+        color: #0d9488;
+    }
+
+    .verifier-credits .credits-icon {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-expired {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    /* Status and Validity Display */
+    .status-validity-display {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .status-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-indicator {
+        font-weight: 700;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-indicator i {
+        font-size: 1rem;
+    }
+    
+    .validity-line {
+        background: #f1f5f9;
+        height: 6px;
+        width: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 0.25rem;
+    }
+    
+    .validity-progress {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        position: relative;
+    }
+    
+    .validity-text {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-align: right;
+        font-weight: 500;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
         .profile-container {
@@ -306,6 +682,10 @@
             flex-direction: column;
             gap: 0.25rem;
         }
+
+        .subscription-container {
+            grid-template-columns: 1fr;
+        }
     }
 
     /* Smooth Animations */
@@ -320,13 +700,98 @@
         }
     }
 
+    @keyframes fadeInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
     .profile-card {
         animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .scraper-card {
+        animation: fadeInLeft 0.6s ease forwards 0.2s;
+        opacity: 0;
+        animation-fill-mode: forwards;
+    }
+
+    .verifier-card {
+        animation: fadeInRight 0.6s ease forwards 0.4s;
+        opacity: 0;
+        animation-fill-mode: forwards;
     }
 </style>
 {% endblock %}
 
 {% block body %}
+<script>
+    // Function to calculate and set progress bar width based on remaining days
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to calculate progress bar width based on days remaining
+        function setProgressBar(element, days, maxDays = 30, colors) {
+            if (!element) return;
+            
+            // Calculate percentage (max 100%)
+            const percentage = Math.min(Math.round((days / maxDays) * 100), 100);
+            
+            // Set width and colors
+            element.style.width = percentage + '%';
+            if (colors) {
+                element.style.background = colors;
+                element.style.boxShadow = colors === 'linear-gradient(90deg, #10b981, #34d399)' 
+                    ? '0 0 10px rgba(16, 185, 129, 0.4)'
+                    : '0 0 10px rgba(59, 130, 246, 0.4)';
+            }
+        }
+        
+        // Set progress for scraper subscription
+        const scraperProgressBar = document.querySelector('.scraper-card .validity-progress');
+        if (scraperProgressBar) {
+            const scraperDaysElement = document.getElementById('scraper-remaining-days');
+            if (scraperDaysElement) {
+                const days = parseInt(scraperDaysElement.dataset.days);
+                setProgressBar(
+                    scraperProgressBar, 
+                    days, 
+                    30, 
+                    'linear-gradient(90deg, #10b981, #34d399)'
+                );
+            }
+        }
+        
+        // Set progress for verifier subscription
+        const verifierProgressBar = document.querySelector('.verifier-card .validity-progress');
+        if (verifierProgressBar) {
+            const verifierDaysElement = document.getElementById('verifier-remaining-days');
+            if (verifierDaysElement) {
+                const days = parseInt(verifierDaysElement.dataset.days);
+                setProgressBar(
+                    verifierProgressBar, 
+                    days, 
+                    30, 
+                    'linear-gradient(90deg, #3b82f6, #60a5fa)'
+                );
+            }
+        }
+    });
+</script>
 <!-- Professional Profile Dashboard -->
 <div class="profile-dashboard">
     <div class="profile-container">
@@ -345,7 +810,7 @@
             <div class="card-header">
                 <h3>
                     <i class="fas fa-user-cog"></i>
-                    Account & Subscription Details
+                    Account Information
                 </h3>
             </div>
             
@@ -382,120 +847,7 @@
                     <span class="profile-value">{{ user.email }}</span>
                 </li>
                 
-                <li class="profile-item">
-                    <span class="profile-label">
-                        <i class="fas fa-search"></i>
-                        <strong>Scraper Package:</strong>
-                    </span>
-                    <span class="profile-value">
-                        <span class="status-badge status-active">{{ profile.scraper_package|capfirst }}</span>
-                    </span>
-                </li>
-                
-                <li class="profile-item">
-                    <span class="profile-label">
-                        <i class="fas fa-shield-alt"></i>
-                        <strong>Verifier Package:</strong>
-                    </span>
-                    <span class="profile-value">
-                        <span class="status-badge status-active">{{ profile.verifier_package|capfirst }}</span>
-                    </span>
-                </li>
-                
-                <li class="profile-item">
-                    <span class="profile-label">
-                        <i class="fas fa-coins"></i>
-                        <strong>Scraper Credits:</strong>
-                    </span>
-                    <span class="profile-value">
-                        {% if profile.email_credits > 0 %}
-                            <span class="credits-badge credits-high">
-                                <i class="fas fa-check-circle"></i>
-                                {{ profile.email_credits }} Credits
-                            </span>
-                        {% else %}
-                            <span class="credits-badge credits-low">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ profile.email_credits }} Credits
-                            </span>
-                        {% endif %}
-                    </span>
-                </li>
-                 <li class="profile-item">
-                    <span class="profile-label">
-                        <i class="fas fa-coins"></i>
-                        <strong>Verifier Credits:</strong>
-                    </span>
-                    <span class="profile-value">
-                        {% if profile.verify_credits > 0 %}
-                            <span class="credits-badge credits-high">
-                                <i class="fas fa-check-circle"></i>
-                                {{ profile.verify_credits }} Credits
-                            </span>
-                        {% else %}
-                            <span class="credits-badge credits-low">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ profile.verify_credits }} Credits
-                            </span>
-                        {% endif %}
-                    </span>
-                </li>
-                
-                <li class="profile-item">
-                    <span class="profile-label">
-                        <i class="fas fa-calendar-alt"></i>
-                        <strong>Scraper Subscription:</strong>
-                    </span>
-                    <span class="profile-value">
-                        {% if profile.subscription_end and profile.subscription_end >= today %}
-                            <span class="status-badge status-active">
-                                <i class="fas fa-check-circle"></i>
-                                Active until {{ profile.subscription_end|date:"M d, Y" }}
-                            </span>
-                            <small class="text-gray-500 block mt-1">({{ remaining_days }} days remaining)</small>
-                        {% elif profile.subscription_end %}
-                            <span class="status-badge status-expired">
-                                <i class="fas fa-times-circle"></i>
-                                Expired {{ profile.subscription_end|date:"M d, Y" }}
-                            </span>
-                            <small class="text-gray-500 block mt-1">(Expired {{ profile.subscription_end|timesince:today }} ago)</small>
-                        {% else %}
-                            <span class="status-badge status-warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                No subscription data
-                            </span>
-                        {% endif %}
-                    </span>
-                </li>
-                
-                <li class="profile-item">
-                    <span class="profile-label">
-                        <i class="fas fa-calendar-check"></i>
-                        <strong>Verifier Subscription:</strong>
-                    </span>
-                    <span class="profile-value">
-                        {% if profile.verifier_subscription_end and profile.verifier_subscription_end >= today %}
-                            <span class="status-badge status-active">
-                                <i class="fas fa-check-circle"></i>
-                                Active until {{ profile.verifier_subscription_end|date:"M d, Y" }}
-                            </span>
-                            {% with days_remaining=profile.verifier_subscription_end|timeuntil:today %}
-                                <small class="text-gray-500 block mt-1">({{ days_remaining }} remaining)</small>
-                            {% endwith %}
-                        {% elif profile.verifier_subscription_end %}
-                            <span class="status-badge status-expired">
-                                <i class="fas fa-times-circle"></i>
-                                Expired {{ profile.verifier_subscription_end|date:"M d, Y" }}
-                            </span>
-                            <small class="text-gray-500 block mt-1">(Expired {{ profile.verifier_subscription_end|timesince:today }} ago)</small>
-                        {% else %}
-                            <span class="status-badge status-warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                No subscription data
-                            </span>
-                        {% endif %}
-                    </span>
-                </li>
+                <!-- Subscription information has been moved to the dedicated subscription section below -->
             </ul>
             
             <div class="mt-6">
@@ -503,6 +855,196 @@
                     <i class="fas fa-edit"></i>
                     Edit Profile
                 </a>
+            </div>
+        </div>
+        
+        <!-- Subscription Packages Section -->
+        <div class="subscription-section">
+            <div class="subscription-header">
+                <h2>Your Subscription Packages</h2>
+                <p>Manage your subscription packages and credits for our email services</p>
+            </div>
+            
+            <div class="subscription-container">
+                <!-- Scraper Package Card -->
+                <div class="subscription-card scraper-card">
+                    <div class="subscription-icon scraper-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <div class="subscription-title scraper-title">
+                        <h3>Email Scraper</h3>
+                        <p>Find email addresses from various sources</p>
+                    </div>
+                    
+                    <div class="credits-counter scraper-credits {% if profile.email_credits > 0 %}credits-high{% else %}credits-low{% endif %}">
+                        <div class="credits-info">
+                            <span class="credits-label">Available Credits</span>
+                            <span class="credits-count">{{ profile.email_credits }}</span>
+                        </div>
+                        <div class="credits-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-details">
+                        <div class="subscription-item scraper-item">
+                            <i class="fas fa-tag"></i>
+                            <div>
+                                <span class="subscription-value">{{ profile.scraper_package|capfirst }}</span>
+                                <span class="subscription-label">Current Package</span>
+                            </div>
+                        </div>
+                        
+                        <div class="subscription-item scraper-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <div>
+                                <span class="subscription-value">
+                                    {% if profile.subscription_end %}
+                                        {{ profile.subscription_end|date:"M d, Y" }}
+                                    {% else %}
+                                        Not Available
+                                    {% endif %}
+                                </span>
+                                <span class="subscription-label">Expiry Date</span>
+                            </div>
+                        </div>
+                        
+                        <div class="subscription-item scraper-item">
+                            <i class="fas fa-clock"></i>
+                            <div style="width: 100%;">
+                                <span class="subscription-label">Status</span>
+                                {% if profile.subscription_end and profile.subscription_end >= today %}
+                                    <div class="status-validity-display">
+                                        <div class="status-line">
+                                            <div class="status-indicator">
+                                                <i class="fas fa-circle"></i>
+                                                 Active
+                                            </div>
+                                        </div>
+                                        <div class="validity-line">
+                                            <div class="validity-progress"></div>
+                                        </div>
+                                        <div class="validity-text" id="scraper-remaining-days" data-days="{{ scraper_remaining_days|default:0 }}">
+                                            Validity: {{ scraper_remaining_days|default:0 }} days remaining
+                                        </div>
+                                    </div>
+                                {% elif profile.subscription_end %}
+                                    <span class="status-pill status-expired">
+                                        <i class="fas fa-times-circle"></i>
+                                        Expired
+                                    </span>
+                                {% else %}
+                                    <span class="status-pill status-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        No data
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-actions">
+                        <a href="#" class="subscription-btn btn-primary btn-scraper">
+                            <i class="fas fa-arrow-circle-up"></i>
+                            Upgrade Package
+                        </a>
+                        <a href="#" class="subscription-btn btn-secondary">
+                            <i class="fas fa-plus-circle"></i>
+                            Buy More Credits
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Verifier Package Card -->
+                <div class="subscription-card verifier-card">
+                    <div class="subscription-icon verifier-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    
+                    <div class="subscription-title verifier-title">
+                        <h3>Email Verifier</h3>
+                        <p>Verify and validate email addresses</p>
+                    </div>
+                    
+                    <div class="credits-counter verifier-credits {% if profile.verify_credits > 0 %}credits-high{% else %}credits-low{% endif %}">
+                        <div class="credits-info">
+                            <span class="credits-label">Available Credits</span>
+                            <span class="credits-count" style="color: #3b82f6;">{{ profile.verify_credits }}</span>
+                        </div>
+                        <div class="credits-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-details">
+                        <div class="subscription-item verifier-item">
+                            <i class="fas fa-tag"></i>
+                            <div>
+                                <span class="subscription-value">{{ profile.verifier_package|capfirst }}</span>
+                                <span class="subscription-label">Current Package</span>
+                            </div>
+                        </div>
+                        
+                        <div class="subscription-item verifier-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <div>
+                                <span class="subscription-value">
+                                    {% if profile.verifier_subscription_end %}
+                                        {{ profile.verifier_subscription_end|date:"M d, Y" }}
+                                    {% else %}
+                                        Not Available
+                                    {% endif %}
+                                </span>
+                                <span class="subscription-label">Expiry Date</span>
+                            </div>
+                        </div>
+                        
+                        <div class="subscription-item verifier-item">
+                            <i class="fas fa-clock"></i>
+                            <div style="width: 100%;">
+                                <span class="subscription-label">Status</span>
+                                {% if profile.verifier_subscription_end and profile.verifier_subscription_end >= today %}
+                                    <div class="status-validity-display">
+                                        <div class="status-line">
+                                            <div class="status-indicator" style="color: #3b82f6;">
+                                                <i class="fas fa-circle"></i>
+                                                 Active
+                                            </div>
+                                        </div>
+                                        <div class="validity-line">
+                                            <div class="validity-progress"></div>
+                                        </div>
+                                        <div class="validity-text" id="verifier-remaining-days" data-days="{{ verifier_remaining_days|default:0 }}">
+                                            Validity: {{ verifier_remaining_days|default:0 }} days remaining
+                                        </div>
+                                    </div>
+                                {% elif profile.verifier_subscription_end %}
+                                    <span class="status-pill status-expired">
+                                        <i class="fas fa-times-circle"></i>
+                                        Expired
+                                    </span>
+                                {% else %}
+                                    <span class="status-pill status-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        No data
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-actions">
+                        <a href="#" class="subscription-btn btn-primary btn-verifier">
+                            <i class="fas fa-arrow-circle-up"></i>
+                            Upgrade Package
+                        </a>
+                        <a href="#" class="subscription-btn btn-secondary">
+                            <i class="fas fa-plus-circle"></i>
+                            Buy More Credits
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
