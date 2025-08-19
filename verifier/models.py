@@ -24,7 +24,6 @@ class EmailVerificationHistory(models.Model):
     valid_count = models.PositiveIntegerField(default=0)
     invalid_count = models.PositiveIntegerField(default=0)
     catchall_count = models.PositiveIntegerField(default=0)
-    
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
